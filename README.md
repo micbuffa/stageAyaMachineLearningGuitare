@@ -1,2 +1,3 @@
-# stageAyaMachineLearningGuitare
-Repo pour le stage d'AYA
+# Ressources liées au stage...
+
+Ici on écrit en MARKUP (cherccher tutos)
