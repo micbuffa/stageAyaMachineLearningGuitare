@@ -14,6 +14,7 @@ from keras.callbacks import ModelCheckpoint
 from cfg4 import config
 import matplotlib.pyplot as plt
 
+config=config()
 # Verifier si un modele existe déja pour éviter la répétition du travail 
 def check_data():
     if os.path.isfile(config.p_path) :
@@ -139,8 +140,8 @@ history = model.fit(X, y , epochs=10,batch_size=32,
 print(history.history.keys())
 
 # summarize history for accuracy
-plt.plot(history.history['accuracy'])
-plt.plot(history.history['val_accuracy'])
+plt.plot(history.history['acc'])
+plt.plot(history.history['val_acc'])
 plt.title('model accuracy')
 plt.ylabel('accuracy')
 plt.xlabel('epoch')
