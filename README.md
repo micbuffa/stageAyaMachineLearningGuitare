@@ -7,8 +7,15 @@
 
 
 
-    ⋅⋅* Veuillez utiliser Spyder pour que vous pouvez visualiser les résultats des fonctions de tracage dans l'IDE
-    ⋅⋅* Wavfiles4 contient les 125 morceaux de piste (Chorus , Nickel-Power , Phaser_ , Reverb)
+        * Veuillez utiliser Spyder pour que vous pouvez visualiser les résultats des fonctions de tracage dans l'IDE
+        * Wavfiles4 contient les 125 morceaux de piste (Chorus , Nickel-Power , Phaser_ , Reverb)
+
+
+## Modification de 06/02/2020 :
+    1. Kfold.py est equivalant à model4.py (étape 2 ) , la seule difference c'est que ce fichier utilise la technique Kfold validation. Le model entrainé sera enregistré dans le dossier kfold.
+    2.J'ai ajouté à la classe config (cfg4) le chemin du dossier des échantillons préparées et enregistrées (samples4) et du dossier kfold.
+    3.J'ai ajouté la matrice de confusion dans predict.py
+    
 
 
 

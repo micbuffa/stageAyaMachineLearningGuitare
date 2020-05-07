@@ -12,3 +12,6 @@ class config:
         self.step=int(rate/10)
         self.model_path = os.path.join('models4', mode + '.model')
         self.p_path = os.path.join('pickles4', mode + '.p')
+        self.samples_path = os.path.join('samples4', 'samples' + '.smp')
+        self.weight_path = os.path.join('rn-1', 'rn-1'+ '.poid')
+        self.kfold_path = os.path.join('kfold', 'kfold'+ '.kf')

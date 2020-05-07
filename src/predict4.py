@@ -11,7 +11,7 @@ from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 
 
-# La fonction qui fait la construction des prédicitons
+# La fonction qui nous retourne la prédiciton 
 def build_predictions(audio_dir):
 
     y_true = [] 
@@ -57,15 +57,14 @@ with open(p_path,'rb') as handle:
 model = load_model(config.model_path)
 
 
-#Récuperation du resultat de la prédiction
+# Construction des prédictions
 y_true , y_pred , fn_prob = build_predictions('clean4')
 
 # Calcul d' Accuracy score
 acc_score = accuracy_score(y_true= y_true, y_pred = y_pred)
 print("\n")
-print("Accuracy score = ", acc_score)
+print("Accuracy score = ", acc_score*100 ,"%")
 print("\n")
-
 
 
 # Enregistrement de résulat dans DF 
@@ -75,13 +74,59 @@ for i, row in df.iterrows():
     y_probs.append(y_prob)
     for c , p in zip(classes,y_prob):
         df.at[i, c] =p
-
+   
+y_predict =y_pred
 y_pred = [classes[np.argmax(y)] for y in y_probs]
 df['Output_prediction'] = y_pred
 
-
-# Enregistrer les prédictions autant que fichier Excel
+# Enregistrer les prédictions en tant que fichier Excel
 df.to_csv('predictions_4pistes.csv',index = False) 
-   
+    
+
+# Tracage de la matrice de confusion
+def plot_confusion_matrix(cm, classes,
+                          normalize=False,
+                          title='Confusion matrix',
+                          cmap=plt.cm.Blues):
+    """
+    This function prints and plots the confusion matrix.
+    Normalization can be applied by setting `normalize=True`.
+    """
+    import itertools
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        print("Normalized confusion matrix")
+    else:
+        print('Confusion matrix, without normalization')
+
+    print(cm)
+
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
+
+    fmt = '.2f' if normalize else 'd'
+    thresh = cm.max() / 2.
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, format(cm[i, j], fmt),
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
+
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+    plt.tight_layout()
+
+
+cnf_matrix = confusion_matrix(y_true, y_predict, labels=[0,1,2,3])
+np.set_printoptions(precision=2)
+
+# Plot non-normalized confusion matrix
+plt.figure()
+plot_confusion_matrix(cnf_matrix, classes=classes,title='Confusion matrix for multi-class')
+
+
 
 
