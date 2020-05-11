@@ -19,3 +19,12 @@
 
 
 
+## Modification de 10/05/2020 :
+    1. j'ai modifié le programme de Kfold pour qu'il soit capable de faire 5 epochs par split
+    la précision est augmenté à 92.16%
+    
+
+
+
+
+
