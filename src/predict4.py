@@ -9,7 +9,30 @@ import pandas as pd
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
+from cfg4 import config
 
+#Initialiser les vaiables utilisées dans les fonctions
+csv_namefile = 'effets_guitare4.csv'   
+clean_namedir = 'clean4'
+prediction_namecsv ='predictions_4pistes.csv'
+
+# La fonction qui intitialise les variables 
+def Init (csv_namefile):
+    df = pd.read_csv(csv_namefile)
+    classes = list(np.unique(df.label))
+    fn2class = dict(zip(df.fname, df.label))
+    p_path = os.path.join('pickles4','conv.p')
+
+    with open(p_path,'rb') as handle:
+        config = pickle.load(handle)
+    
+    # Téléchargement du modele si existe    
+    model = load_model(config.model_path)
+
+    return df , classes , fn2class,model,config
+
+# Initialiser les variables à l'aide de la fonction Init 
+df , classes , fn2class , model,config = Init(csv_namefile)
 
 # La fonction qui nous retourne la prédiciton 
 def build_predictions(audio_dir):
@@ -40,58 +63,41 @@ def build_predictions(audio_dir):
             
             
         fn_prob[fn] = np.mean(y_prob , axis = 0).flatten()
-   
     return y_true, y_pred , fn_prob
-                    
-    
+  
+# La fonction qui rend l'interpretation de la prédiction calculée            
+def Prediction(clean_namedir,prediction_namecsv):
+    # Construction des prédictions
+    y_true , y_pred , fn_prob = build_predictions(clean_namedir)
 
-df = pd.read_csv('effets_guitare4.csv')
-classes = list(np.unique(df.label))
-fn2class = dict(zip(df.fname, df.label))
-p_path = os.path.join('pickles4','conv.p')
+    # Calcul d' Accuracy score
+    acc_score = accuracy_score(y_true= y_true, y_pred = y_pred)
 
-with open(p_path,'rb') as handle:
-    config = pickle.load(handle)
-    
-# Téléchargement du modele si existe    
-model = load_model(config.model_path)
+    print("Accuracy score =", acc_score*100 ,"%")
+    print("\n")
 
-
-# Construction des prédictions
-y_true , y_pred , fn_prob = build_predictions('clean4')
-
-# Calcul d' Accuracy score
-acc_score = accuracy_score(y_true= y_true, y_pred = y_pred)
-print("\n")
-print("Accuracy score = ", acc_score*100 ,"%")
-print("\n")
-
-
-# Enregistrement de résulat dans DF 
-y_probs =[]
-for i, row in df.iterrows():
-    y_prob = fn_prob[row.fname]
-    y_probs.append(y_prob)
-    for c , p in zip(classes,y_prob):
-        df.at[i, c] =p
+    # Enregistrement de résulat dans DF 
+    y_probs =[]
+    for i, row in df.iterrows():
+        y_prob = fn_prob[row.fname]
+        y_probs.append(y_prob)
+        for c , p in zip(classes,y_prob):
+            df.at[i, c] =p
    
-y_predict =y_pred
-y_pred = [classes[np.argmax(y)] for y in y_probs]
-df['Output_prediction'] = y_pred
+    y_predict =y_pred
+    y_pred = [classes[np.argmax(y)] for y in y_probs]
+    df['Output_prediction'] = y_pred
 
-# Enregistrer les prédictions en tant que fichier Excel
-df.to_csv('predictions_4pistes.csv',index = False) 
+    # Enregistrer les prédictions en tant que fichier Excel
+    df.to_csv(prediction_namecsv,index = False) 
     
+    return y_true , y_predict
+
+
 
 # Tracage de la matrice de confusion
-def plot_confusion_matrix(cm, classes,
-                          normalize=False,
-                          title='Confusion matrix',
-                          cmap=plt.cm.Blues):
-    """
-    This function prints and plots the confusion matrix.
-    Normalization can be applied by setting `normalize=True`.
-    """
+def plot_confusion_matrix(cm, classes,normalize=False,title='Confusion matrix',cmap=plt.cm.Blues):
+    
     import itertools
     if normalize:
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
@@ -119,13 +125,20 @@ def plot_confusion_matrix(cm, classes,
     plt.xlabel('Predicted label')
     plt.tight_layout()
 
+# Calcule de la matrice de confusion
+def confusion_matrix_fct(y_true, y_predict):
+    cnf_matrix = confusion_matrix(y_true, y_predict, labels=[0,1,2,3])
+    np.set_printoptions(precision=2)
+    # Plot non-normalized confusion matrix
+    plt.figure()
+    plot_confusion_matrix(cnf_matrix, classes=classes,title='Confusion matrix for multi-class')
 
-cnf_matrix = confusion_matrix(y_true, y_predict, labels=[0,1,2,3])
-np.set_printoptions(precision=2)
 
-# Plot non-normalized confusion matrix
-plt.figure()
-plot_confusion_matrix(cnf_matrix, classes=classes,title='Confusion matrix for multi-class')
+#Récuperer y_predict et y_true et calculer la précision  
+y_true , y_predict = Prediction(clean_namedir,prediction_namecsv)
+confusion_matrix_fct(y_true,y_predict)
+    
+
 
 
 

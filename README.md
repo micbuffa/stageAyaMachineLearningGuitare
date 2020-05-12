@@ -22,6 +22,8 @@
 ## Modification de 10/05/2020 :
     1. j'ai modifié le programme de Kfold pour qu'il soit capable de faire 5 epochs par split
     la précision est augmenté à 92.16%
+    2.La ré-organisation de predict4.py (sous forme des fonctions : Predicition , Init ..) et l'ajout de la fonction confusion_matrix_fct qui calcule et affiche la matrice de confusion
+    
     
 
 
