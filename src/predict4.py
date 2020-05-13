@@ -73,6 +73,7 @@ def Prediction(clean_namedir,prediction_namecsv):
     # Calcul d' Accuracy score
     acc_score = accuracy_score(y_true= y_true, y_pred = y_pred)
 
+    print("\n")
     print("Accuracy score =", acc_score*100 ,"%")
     print("\n")
 
