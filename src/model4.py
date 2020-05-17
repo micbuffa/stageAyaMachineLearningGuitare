@@ -15,46 +15,47 @@ from cfg4 import config
 import matplotlib.pyplot as plt
 
 #Initialiser les vaiables utilisées dans les fonctions
-csv_namefile = 'effets_guitare4.csv'  
-clean_namedir =  'clean4' 
+csv_namefile = 'effets_guitare4.csv' #le fichier excel 
+clean_namedir = 'clean4' #Le dossier des wavfile nettoyés
 config = config()
+#instancier la classe de configuration 
+
 def Init(csv_namefile,clean_namedir):
            
     #Téléchargement du fichier Excel qui contient le nom de la piste avec label qui le correspond       
-
     df = pd.read_csv(csv_namefile)
-    df.set_index('fname', inplace=True)
+    df.set_index('fname', inplace=True)#df.set_index : Défini fname dans DataFrame à l'aide des colonnes existantes.
     
     # Récuperer les échantions nettoyées et le calcul de la longeur de chaque piste
-    for f in df.index:
-        rate, signal = wavfile.read(clean_namedir+'/'+f)
-        df.at[f, 'length'] = signal.shape[0]/rate
+    for f in df.index:#indice de 0 à 123 (nombre de wavfiles dans le fichier excel)
+        rate, signal = wavfile.read(clean_namedir+'/'+f) #recupére les wavfiles nettoyés
+        df.at[f, 'length'] = signal.shape[0]/rate #pour chaque wavfile nettoyé , on calcule la longeur par la formule 
 
     # Récupérer les labelles des classes : Chorus , Nickel-Power , Reverb - Phaser_ 
-    classes = list(np.unique(df.label))
-    class_dist = df.groupby(['label'])['length'].mean()
+    classes = list(np.unique(df.label))#recupere les noms des classes existants sans répétition
+    class_dist = df.groupby(['label'])['length'].mean()#calcule da la longueur moyenne de les pistes regroupées par nom de classe
     
     # Création des N sample , la probabilité de distribution et les choices en se basant sur prob_dist
-    n_samples = 2* int(df['length'].sum()/0.1)
-    prob_dist = class_dist / class_dist.sum()
-    # choices = np.random.choice(class_dist.index, p=prob_dist)
+    n_samples = 2* int(df['length'].sum()/0.1) #le nombre des échantillons de 1/10s dans les wavfiles qui sont en fait possibles dans les signaux
+    prob_dist = class_dist / class_dist.sum()#Les probabilités associées à chaque entrée (classe) 
     
-    return df, classes , class_dist , n_samples , prob_dist
+    return df, classes , class_dist , n_samples , prob_dist# Init initilise les varibeles qui seront utilisées dans les autres fonctions
         
 
-# Verifier si un modele existe déja pour éviter la répétition du travail 
-def check_config():
-    if os.path.isfile(config.p_path) :
+# Verifier si il existe déja une configuration pour le modele pour éviter la répétition du travail 
+def check_config(config):
+    if os.path.isfile(config.p_path) :#verifier si le dossier pickles4(contient la configuration) est vide ou non
         print('Loading existing data {} for model'.format(config.mode))
         with open(config.p_path,'rb') as handle:
-            tmp = pickle.load(handle)
+            tmp = pickle.load(handle)#tmp contient le fichier conv.p où on sauvegarde la configuration
+            
             return tmp
     else:
         return None
 
-# Verifier si il existe déjà des échantillons préparées ia pour éviter la répétition du travail 
-def check_samples():
-    if os.path.isfile(config.samples_path) :
+# Verifier si il existe déjà des échantillons préparées pour éviter la répétition du travail 
+def check_samples(config):
+    if os.path.isfile(config.samples_path) :#verifier si le dossier samples4(contient X et Y du modele) est vide ou non
         print('Loading existing samples {} for model'.format(config.mode))
         with open(config.samples_path,'rb') as handle:
             samp = pickle.load(handle)
@@ -64,57 +65,67 @@ def check_samples():
     
     
 # Creation des échantillons    
-def build_rand_feat(csv_namefile):
+def build_rand_feat(csv_namefile,clean_namedir,config):
     
-    # tmp = check_config()
+    #Dans la classe de configuration on un champ "data" qui contient X et Y du 
+    #modele si ces dérniers est déja passés par la la fonction build_rand_feat
+    # tmp = check_config(config)
     # if tmp:
     #    return tmp.data[0], tmp.data[1]
     
-    samp = check_samples()
+    #Nous utilisons check_samples () car il ne retourne X et Y que s'ils sont déjà préparés (optimisation de la mémoire)
+    samp = check_samples(config)
     if samp :
-        return samp[0], samp[1]
+        return samp[0], samp[1] #samp[0] : X et samp[1]: Y
     
-    # Initialiser les varibales utilisées
-    df, classes , class_dist , n_samples , prob_dist = Init(csv_namefile)
+    # Initialiser les varibales qui seront utilisés dans cette fonction seulement
+    df, classes , class_dist , n_samples , prob_dist = Init(csv_namefile,clean_namedir)
     
     X=[]
     y=[]
-    _min,_max = float('inf'), -float('inf')
-    for _ in tqdm(range(n_samples)):
-        rand_class= np.random.choice(class_dist.index,p=prob_dist)
-        file = np.random.choice(df[df.label==rand_class].index)
-        rate , wav= wavfile.read(clean_namedir+'/'+file)
-        label = df.at[file,'label']
-        rand_index=np.random.randint(0,wav.shape[0]-config.step )
-        sample = wav[rand_index:rand_index+config.step]
+    
+    _min,_max = float('inf'), -float('inf') #pour comprendre la mise à l'échelle pour normaliser les valeurs de loss et acc
+    for _ in tqdm(range(n_samples)):#boucle sur les n échantillons qu'on a calculé déjà 
+    
+        rand_class= np.random.choice(class_dist.index,p=prob_dist)#le choix de la classe est aléatoire chaque itération
+        file = np.random.choice(df[df.label==rand_class].index)#recupération de le filename correspondant à la rand_class que nous avons généré
+        rate , wav= wavfile.read(clean_namedir+'/'+file)#récupération de wavfile qui correspond au file
+        label = df.at[file,'label']#récupération le label de la classe qui correspand au file récupéré
+        rand_index=np.random.randint(0,wav.shape[0]-config.step )#Prendre une valeur du signal basée sur la longueur du audio file, échantillonner directement à cet index et prendre 1/10 s
+        sample = wav[rand_index:rand_index+config.step]#l'échantillon est tiré du fichier wav, le début de l'échantillon est rand_index, la longeur de l'échantillon est step = 1/10s 
+        #afin que le modèle puisse discerner très rapidement une classification différente 
+        #rien d'autre que ces 1 / 10s est supprimé
         X_sample = mfcc(sample,rate,numcep=config.nfeat,nfilt=config.nfilt,
-                       nfft = config.nfft )
-        _min=min(np.amin(X_sample), _min)
-        _max=max(np.amax(X_sample), _max)
-        X.append(X_sample)
-        y.append(classes.index(label))
+                       nfft = config.nfft )#préparation de l'échantillon en utilisant la formule mfccs
+        _min=min(np.amin(X_sample), _min)#la valeur minimal de loss obtenue a chaque entrainement
+        _max=max(np.amax(X_sample), _max)#la valeur maximal d'accuracy obtenue a chaque entrainement
+        X.append(X_sample) #la matrice X contient les échantillons préparées
+        y.append(classes.index(label))#la matrice Y contient les indices des labels récupérés au début de la loop
         
-    config.min = _min
-    config.max = _max 
-    X ,y = np.array(X), np.array(y)
-    X = (X - _min) / (_max - _min)
+    config.min = _min #sauvegarde de la valeur minimal de loss comme attribut de la classe config
+    config.max = _max #sauvegarde de la valeur maximal d'accuracy comme attribut de la classe config
     
-    X = X.reshape(X.shape[0],X.shape[1],X.shape[2], 1)
-    y = to_categorical(y,num_classes=4)
+    X ,y = np.array(X), np.array(y)#tourner x et y en arrays pour garder une trace de min et lmax
+    X = (X - _min) / (_max - _min)#Pour normaliser X 
     
-    config.data = (X , y)
+    
+    X = X.reshape(X.shape[0],X.shape[1],X.shape[2], 1) #remodeler X sans modifier ses données pour l'adapter au modèle convolutionnel
+    y = to_categorical(y,num_classes=4)#to_categorical : Convertit un vecteur de classe (entiers)(0-3) en matrice de classe binaire.
+    
+    config.data = (X , y)#sauenregistrer les x et y en tant qu'attribut data dans la classe de configuration pour une utilisation ultérieure
     with open(config.p_path , 'wb') as handle:
-        pickle.dump(config, handle, protocol=2)
+        pickle.dump(config, handle, protocol=2)#sauvegarde de la configuration utilisées dans la préparation des échantillons dans le dossier pickles4 pour une utilisation ultérieure
         
-    with open(config.samples_path , 'wb') as handle:
+    with open(config.samples_path , 'wb') as handle:#sauvegarde de X et Y dans le dossier samples4 pour une utilisation ultérieure
         pickle.dump(config.data, handle, protocol=2)    
         
-    return X,y
+    return X,y 
 
 
 # Modele convolutionnel
-def get_conv_model(input_shape):
-    model = Sequential()
+def get_conv_model(input_shape): #input_shape : forme des données d'entrées de RN
+
+    model = Sequential()#Un modèle séquentiel convient à une pile de couches simples
     model.add(Conv2D(16,(3,3),activation='relu',strides=(1,1),
                      padding='same', input_shape=input_shape))
     model.add(Conv2D(32,(3,3),activation='relu',strides=(1,1),
@@ -135,30 +146,45 @@ def get_conv_model(input_shape):
     model.add(Dense(4,activation='softmax'))
     model.summary()
     
-    model.compile(loss='categorical_crossentropy', 
-                  optimizer='adam',
-                  metrics=['acc'])
+    model.compile(loss='categorical_crossentropy',optimizer='adam',metrics=['acc'])
+    #categorical_crossentropy : Il s'agit de la classe métrique de crossentropie à utiliser 
+                               #lorsqu'il existe plusieurs classes d'étiquettes (2 ou plus).
+    #optimizer = Adam : efficace en termes de calcul, a peu de mémoire requise, est invariante 
+                      #à la mise à l'échelle diagonale des gradients et convient bien aux problèmes importants en 
+                      #termes de données / paramètres
     return model
 
 
 # La fonction qui nous permet de former notre RN 
-def Train(csv_namefile):
-
-    # La phase d'apprentissage 
-    X , y = build_rand_feat(csv_namefile)
-    y_flat = np.argmax(y, axis=1)
-    input_shape = (X.shape[1],X.shape[2], 1 )
-    model = get_conv_model(input_shape)
-    class_weight = compute_class_weight('balanced',np.unique(y_flat),y_flat)
+def Train(model_path,X , y ,csv_namefile,clean_namedir):#csv_namefile : c'est le fichier excel qui contient les filenames et leurs labels
+    #X et Y : les matrices d'apprentissage
     
-    checkpoint = ModelCheckpoint(config.model_path, monitor='val_acc', verbose =1, mode ='max',
+    y_flat = np.argmax(y, axis=1)#np.argmax : Renvoie les indices des valeurs
+    #maximales le long d'un axe , l'interet de y _flat c'est de récupéré les indices 
+    #des classes : 0 1 2 3 , puisque y contient les indices des labels pour chaque échantillon donc les indices sont répété 
+    # y = [[1. 0. 0. 0.] , y_flat = [0 3 2 ... 3 3 0] 
+    #     [0. 0. 0. 1.]
+    #     [0. 0. 1. 0.]
+    #      ...
+
+
+    input_shape = (X.shape[1],X.shape[2], 1 )#la forme des données d'entrées d"un CNN
+    model = get_conv_model(input_shape) #récupéré le modele conv
+    class_weight = compute_class_weight('balanced',np.unique(y_flat),y_flat)
+    #copute_class_weight : Estimer les poids de classe pour les ensembles de données 
+    #np.unique(y_flat) : pour récupérer les indices des classes dans y_flat sans répétition [0,1,2,3] 
+    
+    checkpoint = ModelCheckpoint(model_path, monitor='val_acc', verbose =1, mode ='max',
                              save_best_only=True, save_weights_only=False, period=1)
+    #Modelcheckpoint :Callback pour enregistrer le modèle Keras ou les poids de modèle à une certaine
+    #fréquence.Dans ce cas , il est utilisé pour calculer l'accuracy et sauvegarder le dernier meilleur modèle en fonction de la quantité surveillée
 
     history = model.fit(X, y , epochs=10,batch_size=32,
                         shuffle =True, class_weight=class_weight, validation_split=0.1 , 
                         callbacks = [checkpoint])
     
-   
+    #history : Forme le modèle pour un nombre fixe d'époques avec une validation automatique 
+    model.save(model_path)#Enregistre le modèle formé dans un fichier pour une utilisation ultérieure
 
     # Affichage graphiquement de L’évolution de l’erreur (loss function) 
     # et de l’erreur de classification ‘accuracy’
@@ -183,9 +209,11 @@ def Train(csv_namefile):
     plt.show()
 
 
-    model.save(config.model_path)
 
-Train(csv_namefile)
+# La phase d'apprentissage 
+X , y = build_rand_feat(csv_namefile,clean_namedir,config) #récupérer les Matrices X et Y préparés par la fonction build_rand_feat
+#appeler la fonction de formation du modèle
+Train(config.model_path,X,y,csv_namefile,clean_namedir)
 
 
 

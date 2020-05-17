@@ -8,33 +8,30 @@ from python_speech_features import mfcc, logfbank
 import librosa
 
 
-csv_namefile = 'LaGrange-Guitars.csv'  
-clean_namedir =  'clean_test' 
-wavfiles_namedir = 'wavfiles_test'
-
 # Initialiser les variables du programmes
+csv_namefile = 'LaGrange-Guitars.csv' #le fichier excel de wavfile de test 
+clean_namedir =  'clean_test'  #Le dossier des wavfile de test nettoyés
+wavfiles_namedir = 'wavfiles_test' #le dossier des wavfiles de test avant nettoyage
+class_de_test = 'LaGrange-Guitars'
+
 def Init (csv_namefile,wavfiles_namedir):
     
     # Récupération de fichier Excel ou il y a le file name avec label correspond
-    df = pd.read_csv(csv_namefile)
-    df.set_index('fname',inplace=True)
+    df = pd.read_csv(csv_namefile)#index de 0 à 23 (nombre de wavfiles dans le fichier excel)
+    df.set_index('fname',inplace=True)#df.set_index : Défini l'index DataFrame à l'aide des colonnes existantes.
 
-# Récupération des pistes et le calcul de leurs longueur
-    for f in df.index :
-        rate, signal = wavfile.read(wavfiles_namedir +'/'+f)
-        df.at[f,'length'] = signal.shape[0]/rate
+    # Récupération des pistes et le calcul de leurs longueur
+    for f in df.index :#index de 0 à 24 (nombre de wavfiles dans le fichier excel)
+        rate, signal = wavfile.read(wavfiles_namedir +'/'+f)#Récupérer le wavfile
+        df.at[f,'length'] = signal.shape[0]/rate#pour chaque wavfile , on calcule la longeur par la formule 
 
 
-# Récupération du labelle des pistes sans répition : Chorus , Nickel-Power , Phaser_,Reverb
-    classe = 'LaGrange-Guitars'
+    #calcule da la longueur moyenne de les pistes regroupées par nom de classe
     class_dist = df.groupby(['label'])['length'].mean()
 
-    
-    
-    return df, classe , class_dist 
-df,classe,class_dist = Init(csv_namefile,wavfiles_namedir)
+    return df, class_dist #ces 2 varibales sont utilisées dans les autres fonctions
 
-# Tracage des diffents fonctions : mfcc , fft, ..       
+# Tracage des diffents fonctions : mfcc , fft, ..  (les fonctions sont prédéfinie)     
 def plot_signals(signals):
     
     fig, axes = plt.subplots(nrows=1, ncols=1, sharex=False,squeeze =False,
@@ -93,20 +90,14 @@ def plot_mfccs(mfccs):
             i += 1
 
 
-# Le nettoyage des échantillons
-def Cleaning(y, rate, threshold):
-    mask=[]
+# Le nettoyage des échantillons: calcule l'enveloppe du signal
+def Cleaning(y, rate, threshold):#y = signal à nettouyer , threshold = le seuil minimal qu'un signal peut atteindre
+    mask=[]#liste des true et false depend du seuil 
        
-    y=pd.Series(y).apply(np.abs)
-    y_mean= y.rolling(window=int(rate/10),min_periods=1, center=True).mean()
-    
-# Tracage de l'envelope    
-    # plt.plot(y,color='blue' , label = c)
-    # plt.plot(y_mean,color='red')
-    # plt.legend()
-    # plt.show()
-
-    for mean in y_mean:
+    y=pd.Series(y).apply(np.abs)#Transforme le signal en serie entre 0 et 1 
+    y_mean= y.rolling(window=int(rate/10),min_periods=1, center=True).mean()#(Provide rolling window calculations on every 1/10s of signal) 
+ 
+    for mean in y_mean:#si la valeur du signal > le seuil , donc elle est acceptée sinon supprimée
         if mean > threshold:
             mask.append(True)
         else:
@@ -116,13 +107,14 @@ def Cleaning(y, rate, threshold):
 
 # Fonction du calcul pour fft , elle retourne le signal en fonction de freq
 def calc_fft(y, rate):
-    n=len(y)
-    freq =  np.fft.rfftfreq(n, d=1/rate)
-    Y = abs(np.fft.rfft(y)/n)
-    return [Y,freq]
+    n=len(y)# y = signal 
+    n=len(y) # la longeur du signal
+    freq =  np.fft.rfftfreq(n, d=1/rate) #fft.rfftfreq : Renvoie les fréquences d'échantillonnage de la transformée de Fourier discrète (pour une utilisation avec rfft, irfft).
+    Y = abs(np.fft.rfft(y)/n) #fft.rfft : Calcule la transformée de Fourier discrète unidimensionnelle pour une entrée réelle.
+    return [Y,freq] #retourne le couple Y et freq de chaque signal pour tracer le fft
 
 # Tracage de pie_chart des pistes
-def pie_chart():
+def pie_chart(class_dist,df):# df : dataframe , class_dist , c'est deux varibales sont déjà initialisées à l'aide de la fonction Init
     
     # Tracage de pie chart
     fig, ax = plt.subplots()
@@ -135,26 +127,28 @@ def pie_chart():
     df.reset_index(inplace=True)
 
 # Le calcule et le tracage des fonctions ; fft , mfccs, fbank ..
-def built_plot_signal(wavfiles_namedir):
+def built_plot_signal(wavfiles_namedir,df,class_de_test):#df et class_de_test: le nom de la classe de test, sont 2 varibales déjà initialiser 
     # Initialisation des varibale pour le tracage 
+ 
     signals = {}
     fft = {}
     fbank = {}
     mfccs = {}
 
    
-    wav_file= df[df.label == classe].iloc[0,0]
-    signal, rate = librosa.load(wavfiles_namedir+'/'+wav_file, sr = 44100 )
+    wav_file= df[df.label == class_de_test].iloc[0,0]# Puisque on a une seule classe donc on recupere le filename de col = 0 et row = 0
+    signal, rate = librosa.load(wavfiles_namedir+'/'+wav_file, sr = 44100 )#on charge le wavfile correspondant au filename
     
-    mask = Cleaning(signal, rate, 0.005)
-    signal = signal[mask]
+    mask = Cleaning(signal, rate, 0.005)#Calculer le mask de wavfile récupéré
+    signal = signal[mask]#Envelopper le signal par le mask calculé 
 
-    signals[classe] = signal
-    fft[classe] = calc_fft(signal, rate)
+    #faire le tracage en utilisant le siganl nettoyé
+    signals[class_de_test] = signal
+    fft[class_de_test] = calc_fft(signal, rate)
     bank = logfbank(signal[:rate],rate , nfilt=26 ,nfft=1103).T
-    fbank[classe] = bank
+    fbank[class_de_test] = bank
     mel = mfcc(signal[:rate],rate,numcep=13, nfilt=26 ,nfft=1103).T
-    mfccs[classe] = mel
+    mfccs[class_de_test] = mel
 
   
     # Tracage des fonctions
@@ -170,19 +164,26 @@ def built_plot_signal(wavfiles_namedir):
     plot_mfccs(mfccs)
     plt.show()
 
-# Enregistrement des pistes néttoyées dans le dossier 'clean' 
-def save_clean_wavfiles(clean_namedir, wavfiles_namedir):
-    # Enregistrement des pistes nettoyées dans une nv dossier "Clean"
-    if len(os.listdir(clean_namedir)) == 0 :
-        for f in tqdm(df.fname):
-            signal,rate = librosa.load(wavfiles_namedir +'/'+f,sr=16000)
-            mask=Cleaning(signal,rate,0.005)
-            wavfile.write(filename=clean_namedir +'/'+f,rate=rate,data=signal[mask])
-    
+# Enregistrement des pistes néttoyées dans le dossier 'clean_test' 
+def save_clean_wavfiles(clean_namedir, wavfiles_namedir,df):
 
-pie_chart()
-built_plot_signal(wavfiles_namedir)
-save_clean_wavfiles(clean_namedir, wavfiles_namedir)
+    if len(os.listdir(clean_namedir)) == 0 :#si le dossier Clean_test est vide nous procédons au nettoyage
+        for f in tqdm(df.fname):#Boucler sur les morceaux de la classe de test
+            signal,rate = librosa.load(wavfiles_namedir +'/'+f,sr=16000)#recupéré le wavfile qui le correspond
+            mask=Cleaning(signal,rate,0.005) #calcul du mask du signal récupéré
+            wavfile.write(filename=clean_namedir +'/'+f,rate=rate,data=signal[mask]) #sauvegarder le wavfile nettoyé dans le dossier Clean_test
+   
+# Initialiser les varibales      
+df,class_dist = Init(csv_namefile,wavfiles_namedir)
+
+# Taracage de pie chart
+pie_chart(class_dist,df)
+
+# Tracage des fonctions fft mfccs ..
+built_plot_signal(wavfiles_namedir,df,class_de_test)
+
+# sauvegarde des wavfiles nettoyés
+save_clean_wavfiles(clean_namedir, wavfiles_namedir,df)
 
 
 
