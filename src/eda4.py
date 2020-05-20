@@ -8,7 +8,7 @@ from python_speech_features import mfcc, logfbank
 import librosa
 
 #Initialiser les vaiables utilisées dans les fonctions
-csv_namefile = 'effets_guitare4.csv' #le fichier excel 
+csv_namefile = 'effets_guitare.csv' #le fichier excel 
 clean_namedir = 'clean4' #Le dossier des wavfile nettoyés
 wavfiles_namedir = 'wavfiles4' #le dossier des wavfiles avant nettoyage
 
@@ -134,7 +134,7 @@ def built_plot_signal(df,classes,wavfiles_namedir):#df et classes: les noms des 
         wav_file= df[df.label == c].iloc[0,0]#on verifie si le label sélectionné par la loop est le meme que dans DF alors on recupere la premiere de col = 0 et row = 0
         signal, rate = librosa.load(wavfiles_namedir+'/'+wav_file, sr = 44100 )#on charge le wavfile correspondant au filename
     
-        mask = Cleaning(signal, rate, 0.005) #Calculer le mask de wavfile récupéré
+        mask = Cleaning(signal, rate, 0.0005) #Calculer le mask de wavfile récupéré
         signal = signal[mask] #Envelopper le signal par le mask calculé 
 
         #faire le tracage en utilisant le siganl nettoyé 
@@ -166,7 +166,7 @@ def save_clean_wavfiles(df,clean_namedir, wavfiles_namedir):
     if len(os.listdir(clean_namedir)) == 0 :#si le dossier Clean est vide nous procédons au nettoyage
         for f in tqdm(df.fname):#Boucler sur les morceaux de chaque classe
             signal,rate = librosa.load(wavfiles_namedir +'/'+f,sr=16000)#recupéré le wavfile qui le correspond
-            mask=Cleaning(signal,rate,0.005) #calcul du mask du signal récupéré
+            mask=Cleaning(signal,rate,0.0005) #calcul du mask du signal récupéré
             wavfile.write(filename=clean_namedir +'/'+f,rate=rate,data=signal[mask]) #sauvegarder le wavfile nettoyé dans le dossier Clean4
  
 # Initialiser les varibales    

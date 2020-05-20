@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from cfg4 import config
 
 #Initialiser les vaiables utilisées dans les fonctions
-csv_namefile = 'effets_guitare4.csv'#le fichier excel 
+csv_namefile = 'effets_guitare.csv'#le fichier excel 
 clean_namedir = 'clean4' #Le dossier des wavfile nettoyés
 prediction_namecsv ='predictions_4pistes.csv' #Le nom de fichier excel résultant aprés la prédiction
 

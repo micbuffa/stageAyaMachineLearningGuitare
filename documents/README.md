@@ -36,6 +36,11 @@
             2.Puis vous exécutez le programme "predict_test.py" qui nous permet d'avoir la prédiction de test sous forme fichier EXCEL et le graphique de variation de ces prédictions de RN.
             PS : Vous devez former le RN avant de tester
     
+## Modification de 20/05/2020 :
+    1.l'ajout des commentaires dans tous les programmes.
+    2.Correction du programme de Predict_test.py (ajout des fonction de tracage et l'optimisation de code)
+    3.Elimination des varibales globales 
+    5.Correction du probleme du coupage des pistes en petits morceaux 
 
     
 

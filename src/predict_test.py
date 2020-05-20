@@ -11,18 +11,16 @@ from cfg4 import config
 
 
 #Initialiser les vaiables utilisées dans les fonctions
-csv_namefile2 = 'effets_guitare4.csv'#le fichier excel des classes utilisées pour former le modèle
-csv_namefile = 'LaGrange-Guitars.csv'#le fichier excel de la classe de test  
+csv_namefile2 = 'effets_guitare.csv'#le fichier excel des classes utilisées pour former le modèle
+csv_namefile = 'LaGrange-Guitars.csv' #le fichier excel de wavfile de test 
 clean_namedir =  'Test/clean_test' #le chemin de dossier de wavfile nettoyé de la classe de test
-prediction_namecsv ='predictions_test.csv' #Le nom de fichier excel résultant aprés la prédiction
 
 # La fonction qui intitialise les variables 
-def Init (csv_namefile):
+def Init (csv_namefile,csv_namefile2):
     df = pd.read_csv(csv_namefile)# Téléchargement du fichier Excel qui contient le nom de la piste de test avec label qui le correspond    
     df2 = pd.read_csv(csv_namefile2)# Téléchargement du fichier Excel qui contient le nom des pistes d'apprentissage avec label qui le correspond    
 
     classes = list(np.unique(df2.label))#récupérer les labels des classes apartir de df sans répitition de ces labels
-    fn2class = dict(zip(df.fname, df.label))#création d'un dictionnaire où clé : filename et valeur : label
     
     p_path = os.path.join('pickles4','conv.p')#récupérer le chemin de dossier pickles
     with open(p_path,'rb') as handle:
@@ -31,23 +29,24 @@ def Init (csv_namefile):
     #charger le modele formé à partir le dossier models4
     model = load_model(config.model_path)
 
-    return df , classes , fn2class,model,config
+    return df , classes , model,config
 
 
 
 
-# La fonction qui nous retourne la prédiciton 
-def build_predictions(clean_namedir,config,df,classes,model):
+# La fonction qui nous calcule la prédiciton 
+def build_predictions(clean_namedir,config,model):
 
-    y_pred = []# liste des ouputs (apres l'interpretation)
-    fn_prob = {} #ensemble de filenames avec la moyenne de leurs probabilités q'ils les correspond (Apres prediction)
+    index_prob = {}#dictionnaire : chaque 1/10s a sa probabilité pour les 4 classes
+    index_class ={}#dictionnaire : chaque 1/10s a l'indice de classe qui a la plus forte probabilité
+
     
     
     print('Extracting features from audio')
     
     for fn in tqdm(os.listdir(clean_namedir)):#loop sur les filennames des morceaux de wavfile de test nettoyé
         rate, wav =  wavfile.read(os.path.join(clean_namedir,fn))#récupérer le wavfile
-        y_prob = []#liste des probabilités pour un wavfile
+        t=0# t : temps en ms
     
         for i in range(0,wav.shape[0]-config.step, config.step):#loop sur la longueur de wavfile avec un pas de 1/10s
             sample = wav[i:i+config.step]#à chaque iteration , on récupére 1/10s de wavfile
@@ -56,77 +55,127 @@ def build_predictions(clean_namedir,config,df,classes,model):
             x =( x - config.min) / (config.max - config.min) #normaliser le X avec les valeurs min et max qui sont déjà calculées a la phase de l'apprentissage 
             x = x.reshape(1,x.shape[0],x.shape[1], 1)#remodeler X sans modifier ses données pour l'adapter au modèle convolutionnel
             y_hat = model.predict(x)#la probabilité de X  d'etre chaque classe , sa forme : [0.8954995 , 0,0256264, 0,1684461,0.2556898] ,chaque valeur correspond a une classe
-            y_prob.append(y_hat)#rassembler les probabilités du même wavfile (chaque prob correspond au 1/10s de wavfiles encours)
-            y_pred.append(np.argmax(y_hat))#y_pred : contient les indices des classes prédites ou la probabilité etait la plus élévé
+            
    
-                        
-        fn_prob[fn] = np.mean(y_prob , axis = 0).flatten()
-        #chaque fichier wav de 8s nous l'avons coupé en échantillons de 1 / 10s, chaque échantillon nous avons calculé la probabilité d'être l'une des classes
-        # nous avons rassemblé ces probabilités dans une liste que nous avons appelée y_prob
-        # donc en conclusion pour chaque fichier wav il y a une liste de probabilités
-        # pour obtenir la probabilité moyenne du fichier wav pour chaque classe, on applique np.mean sur chaque colonne de probabilités correspondant à la même classe
-   
-    return y_pred , fn_prob
+
+            index_prob[t] = y_hat #t : temps en ms , chaque 100ms = 1/10s, y_hat : la probabilité de chaque classes pour la meme 1/10s
+            index_class[t]=np.argmax(y_hat) #t : temps en ms , chaque 100ms = 1/10s,np.argmax(y_hat) : renvoie l'indice de classe qui a la plus forte probabilité pour ce 1 / 10s
+            t +=100# 100 ms = 1/10s = 0.1s
+
+
+    return  index_prob,index_class
   
-# La fonction qui rend l'interpretation de la prédiction calculée            
-def Prediction(clean_namedir,prediction_namecsv,config,df,classes,model):
-    # Construction des prédictions
-    y_pred , fn_prob = build_predictions(clean_namedir,config,df,classes,model)
-    #y_pred contient l'indice de la classe prédite pour chaque morceau de le wav de test
-
-
-    # Enregistrement de résulat dans DF 
-    y_probs =[]#la liste des probabilités
-    for i, row in df.iterrows():#loop sur les lignes des DF (24 lignes)
-        y_prob = fn_prob[row.fname]#On récupére la ligne des probilités pour chaque file name de morceau qui le correspond
-        #fn_prob : disctionnaire clé/ valeur , filename/probabilités  ex : LaGrange-Guitars_0 : [0.82,0.01,0.16,0.23]
-        y_probs.append(y_prob)#ajouer à la liste des probabilités ([val, val , val , val])
-        for c , p in zip(classes,y_prob):# c boucle sur classes(Chorus , Nickel-Power , ..) , et p sur y_prob qu'on récupéré
-            df.at[i, c] =p#pour le même fichier wav il y a 4 probabilités, chacune correspondant à une classe
-   
-    y_predicted_class = [classes[np.argmax(y)] for y in y_probs]#On récupére le nom de la classe correspond à la probabilité la plus élevé pour un morceau de wavfile
-    df['Output_prediction'] = y_predicted_class#Ajouter un column dans DF "Output_prediction" où nous mettons la prédiction finale pour chaque fichier wav
-
-    #Transformer DataFrame en un fichier csv pour visualiser les résultats
-    df.to_csv(prediction_namecsv,index = False) 
-    return y_predicted_class
     
-#Le tracage des résultats de la prédiction
-def plot_prediction(y_predicted_class):#Fonction à modifier
+  
+# La fonction qui rend l'interpretation de la prédiction calculée sous forme des graphes           
+def Prediction(clean_namedir,config,df,classes,model):
     
-    # les valeurs de l'axe des abscisses
-    x =['00:00','00:10','00:20','00:30','00:40','00:50','01:00',
-        '01:10','01:20','01:30','01:40','01:50','02:00',
-        '02:10','02:20','02:30','02:40','02:50','03:00','03:10',
-        '03:20','03:30','03:40']
-   
-    #Les valeurs del’axe des ordonnées
-    y = y_pred 
-    plt.xticks(rotation=90, ha='right')
-    # plotting the points  
-    plt.plot(x, y, color='black', linewidth = 2,marker='.', 
-             markerfacecolor='red', markersize=10) 
-     
-    #Le pas utilisées dans le graphe 
-    plt.xlim(0.0,22.5)
-    plt.xlabel('Temps (minute)') 
-    plt.ylabel('Classes') 
+    # Construction des prédictions : retourne les dictionnaires pour le tracage
+    index_prob ,index_class= build_predictions(clean_namedir,config,model)
+    # index_prob : clé: temps en ms , valeur : les 4 probabilités pour chaque classe
+    # index_class : clé : temps en ms , valeur : l'indice de classe qui a la plus forte probabilité 
+
+    #Tracage de la variation de la prédiction
+    #le pas de l'axe des abscisses : 10000ms = 10 s 
+
+    plot_prediction_probabilities(index_prob,10000)
+    plot_prediction_classes(index_class, classes,10000,df)
+    
+    
+    
+    
+    
+
+    
+#Le tracage des résultats de la prédiction (probabilités)
+def plot_prediction_probabilities(index_prob,pas):#Fonction à modifier
+    Chorus =[]#liste des probabilités pour Chorus tout au long la piste
+    Reverb =[]#liste des probabilités pour Reverb tout au long la piste
+    Phaser_ =[]#liste des probabilités pour Phaser_ tout au long la piste
+    Nickel_Power = []#liste des probabilités pour Nickel-Power tout au long la piste
+    x= []#liste de temps ( 1/10s )
+    temps_pas = pas # le pas de l'axe des abscisse (10000ms = 10 s)
+
+    # les valeurs de l'axe des abscisses et des ordonnées
+    # ind : temps 
+    # val : list des probabilités ,va[0][0] : prob Chorus , va[0][1] : prob Nickel-Power 
+    # , va[0][2]: prob Phaser_ ,va[0][3] : prob Reverb
+    for ind , val in index_prob.items():
+        Chorus.append(val[0][0])
+        Reverb.append(val[0][3])
+        Phaser_.append(val[0][2])
+        Nickel_Power.append(val[0][1])
+        x.append(ind)
+
+    # La taille de graphe 
+    plt.figure(figsize=(200,10))
+    # Tracage de chaque courbe => courbe : les probabilités d'une classe
+    plt.plot(x, Chorus, color='black', label="Chorus",linewidth = 2,
+              markersize=10) 
+    plt.plot(x, Nickel_Power,label="Nickel-Power", color='red', linewidth = 2,
+             markersize=10) 
+    
+    plt.plot(x, Phaser_, color='blue',label="Phaser_", linewidth = 2,
+            markersize=10)
+    
+    plt.plot(x, Reverb, color='green',label="Reverb", linewidth = 2,
+              markersize=10) 
+ 
+    #Le pas utilisées dans le graphe  = 10000ms = 10s
+    plt.xticks(np.arange(0, len(x)*100, temps_pas))
+    plt.xlim(0 ,len(x)*100)
+    plt.xlabel('Time (ms)') 
+    plt.ylabel('probabilities') 
     plt.title('la variation des prédictions du RN (test)') 
-
+    plt.legend(prop={"size":10},loc='upper left')
     plt.show()
 
+#Le tracage des résultats de la prédiction (classes)
+def plot_prediction_classes(index_class,classes,pas,df):#Fonction à modifier
+    x=[]#liste de temps (1/10s)
+    classe=[]#liste des libellés de classes correspondant aux probabilités
+    temps_pas = pas # le pas de l'axe des abscisse (10000ms = 10 s)
     
+    
+    # les valeurs de l'axe des abscisses et des ordonnées
+    # ind : temps 
+    # val : list des indices des classes , 0 : Chorus , 1 : Nickel-Power , 2 : Phaser_ , 3 : Reverb
+    for ind , val in index_class.items():
+        #récupérer le libellé de la classe
+        for c  in classes:
+            if classes.index(c) == val:
+                classe.append(c)
 
+        x.append(ind)
+    
+    #Sauvegarde des résulats en tant que fichier excel (la prédiction pour chaque 1/10s de 
+    #la piste de test)  
+    #100ms = 1/10s
+    
+    data = {'Temps (1/10s=100ms)' : x ,'Output_pred ' : classe}
+    pred_df = pd.DataFrame(data)   
+    pred_df.to_csv(df.label[0] +'_predictions.csv',index = False) 
+     
 
-
-
+    # plt.xticks(rotation=90, ha='right')
+    #la taille de graphe
+    plt.figure(figsize=(200,10))
+    plt.plot(x, classe, color='black',linewidth = 2,marker='.', 
+             markerfacecolor='red', markersize=20) 
+    #len(x) : nombre de 1 / 10s dans la piste
+    #len(x)*100 : pour récupérer la derniere valeur dans la liste de temps
+    plt.xticks(np.arange(0, len(x)*100, temps_pas))
+    plt.xlim(0 ,len(x)*100)
+    plt.xlabel('Time (ms)') 
+    plt.ylabel('classes') 
+    plt.title('la variation des prédictions du RN (test)') 
+    plt.show()
  
 # Initialiser les variables à l'aide de la fonction Init 
-df , classes , fn2class , model, config = Init(csv_namefile)   
+df , classes , model, config = Init(csv_namefile,csv_namefile2)   
 
 #Récuperer y_pred pour tracer les resultats 
-y_pred = Prediction(clean_namedir,prediction_namecsv,config,df,classes,model)
+Prediction(clean_namedir,config,df,classes,model)
 
-#Tracage de la variation de la prédiction
-plot_prediction(y_pred)
+
     
