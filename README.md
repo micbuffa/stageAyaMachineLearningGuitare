@@ -41,7 +41,7 @@
     
 ## Modification de 20/05/2020 :
     1.l'ajout des commentaires dans tous les programmes.
-    2.Correction du programme de Predict_test.py (ajout des fonction de tracage et l'optimisation de code)
+    2.Correction du programme de Predict_test.py (ajout des fonctions de tracage et l'optimisation du code)
     3.Elimination des varibales globales 
     5.Correction du probleme du coupage des pistes en petits morceaux 
 
