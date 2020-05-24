@@ -17,11 +17,30 @@ import matplotlib.pyplot as plt
 #Initialiser les vaiables utilisées dans les fonctions
 csv_namefile = 'effets_guitare.csv' #le fichier excel 
 clean_namedir = 'clean4' #Le dossier des wavfile nettoyés
-config = config()
-#instancier la classe de configuration 
+config = config()#instancier la classe de configuration 
+
 
 def Init(csv_namefile,clean_namedir):
+    """Initialise les variables du programme
+    Args:
+        csv_namefile: le nom du fichier excel où il y a la liste des noms de fichiers audio avec le libellé de la classe qui leur correspond
+        clean_namedir: le nom de dossier où il y les audiofiles nettoyés 
            
+    Returns:
+        
+        renvoie 5 variables qui seront utilisées dans les autres fonctions       
+        df : dataframe contient les données dans le fichier excel 
+        classes : contient les noms des classes qui seront utilisés dans l'apprentissage 
+        class_dist : contient les libellés des classes et la longueur moyenne de chacune d'elles
+        n_samples :le nombre des échantillons de 1/10s dans les wavfiles qui sont en fait possibles dans les signaux en se basant sur 'length'
+        prob_dist :La probabilité associée à chaque entrée (classe)
+        exemple : 
+            Chorus          0.249651
+            Nickel-Power    0.250399
+            Phaser_         0.249551
+            Reverb          0.250399
+        
+    """   
     #Téléchargement du fichier Excel qui contient le nom de la piste avec label qui le correspond       
     df = pd.read_csv(csv_namefile)
     df.set_index('fname', inplace=True)#df.set_index : Défini fname dans DataFrame à l'aide des colonnes existantes.
@@ -37,13 +56,21 @@ def Init(csv_namefile,clean_namedir):
     
     # Création des N sample , la probabilité de distribution et les choices en se basant sur prob_dist
     n_samples = 2* int(df['length'].sum()/0.1) #le nombre des échantillons de 1/10s dans les wavfiles qui sont en fait possibles dans les signaux
-    prob_dist = class_dist / class_dist.sum()#Les probabilités associées à chaque entrée (classe) 
-    
+    prob_dist = class_dist / class_dist.sum()#La probabilité associée à chaque entrée (classe)
     return df, classes , class_dist , n_samples , prob_dist# Init initilise les varibeles qui seront utilisées dans les autres fonctions
         
 
-# Verifier si il existe déja une configuration pour le modele pour éviter la répétition du travail 
+
 def check_config(config):
+    """fonction de vérification : Verifier si il existe déja une configuration pour le modele pour éviter la répétition du travail 
+    Args:
+        config : une instance de la classes configuration 
+          
+    Returns:
+                renvoie une configuration existante pour le modèle ,qui est enregistrée dans le dossier 'pickles4'
+        sinon rien 
+        
+    """   
     if os.path.isfile(config.p_path) :#verifier si le dossier pickles4(contient la configuration) est vide ou non
         print('Loading existing data {} for model'.format(config.mode))
         with open(config.p_path,'rb') as handle:
@@ -53,8 +80,16 @@ def check_config(config):
     else:
         return None
 
-# Verifier si il existe déjà des échantillons préparées pour éviter la répétition du travail 
+
 def check_samples(config):
+    """fonction de vérification :Verifier si il existe déjà des échantillons préparées pour éviter la répétition du travail 
+    Args:
+        config : une instance de la classes configuration 
+          
+    Returns:
+        renvoie les deux matrices X et Y préparées pour le modèle ,qui sont enregistrées dans le dossier 'samples4'
+        sinon rien 
+    """    
     if os.path.isfile(config.samples_path) :#verifier si le dossier samples4(contient X et Y du modele) est vide ou non
         print('Loading existing samples {} for model'.format(config.mode))
         with open(config.samples_path,'rb') as handle:
@@ -64,8 +99,18 @@ def check_samples(config):
         return None
     
     
-# Creation des échantillons    
+
 def build_rand_feat(csv_namefile,clean_namedir,config):
+    
+    """fonction pour la préparation des échantillons  
+    Args:
+        clean_namedir : le nom du dossier où nous enregistrons les pistes nettoyées
+        wavfiles_namedir : le nom de dossier où il y les audiofiles       
+        config : une instance de la classes configuration 
+          
+    Returns:
+        renvoie les deux matrices X et Y
+    """ 
     
     #Dans la classe de configuration on un champ "data" qui contient X et Y du 
     #modele si ces dérniers est déja passés par la la fonction build_rand_feat
@@ -122,9 +167,15 @@ def build_rand_feat(csv_namefile,clean_namedir,config):
     return X,y 
 
 
-# Modele convolutionnel
-def get_conv_model(input_shape): #input_shape : forme des données d'entrées de RN
+def get_conv_model(input_shape): 
 
+    """fonction pour la préparation de modele convolutionnel
+    Args:
+        input_shape : forme des données d'entrées de RN
+          
+    Returns:
+        renvoie le modele
+    """ 
     model = Sequential()#Un modèle séquentiel convient à une pile de couches simples
     model.add(Conv2D(16,(3,3),activation='relu',strides=(1,1),
                      padding='same', input_shape=input_shape))
@@ -155,9 +206,19 @@ def get_conv_model(input_shape): #input_shape : forme des données d'entrées de
     return model
 
 
-# La fonction qui nous permet de former notre RN 
-def Train(model_path,X , y ,csv_namefile,clean_namedir):#csv_namefile : c'est le fichier excel qui contient les filenames et leurs labels
-    #X et Y : les matrices d'apprentissage
+
+def Train(model_path,X , y ,csv_namefile,clean_namedir):
+    
+    """fonction d'apprentissage : nous permet de former notre RN 
+    Args:
+        model_path :le chemin du dossier 'models4' où nous enregistrerons notre modèle formé
+        X , Y : les matrices d'apprentissage
+        csv_namefile: le nom du fichier excel où il y a la liste des noms de fichiers audio avec le libellé de la classe qui leur correspond
+        clean_namedir : le nom du dossier où nous enregistrons les pistes nettoyées
+        
+    Returns:
+        Trace les courbes d'accuracy et loss de notre modele formé 
+    """ 
     
     y_flat = np.argmax(y, axis=1)#np.argmax : Renvoie les indices des valeurs
     #maximales le long d'un axe , l'interet de y _flat c'est de récupéré les indices 
