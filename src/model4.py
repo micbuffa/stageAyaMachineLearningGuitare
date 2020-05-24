@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 #Initialiser les vaiables utilisées dans les fonctions
 csv_namefile = 'effets_guitare.csv' #le fichier excel 
 clean_namedir = 'clean4' #Le dossier des wavfile nettoyés
-config = config()#instancier la classe de configuration 
+config = config()#instance la classe de configuration 
 
 
 def Init(csv_namefile,clean_namedir):
