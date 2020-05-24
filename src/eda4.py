@@ -12,29 +12,20 @@ csv_namefile = 'effets_guitare.csv' #le fichier excel
 clean_namedir = 'clean4' #Le dossier des wavfile nettoyés
 wavfiles_namedir = 'wavfiles4' #le dossier des wavfiles avant nettoyage
 
-# 
+ 
 def Init (csv_namefile,wavfiles_namedir):
-    """Initialise les variables du programmes
+    """Initialise les variables du programme
     Args:
         csv_namefile: le nom du fichier excel où il y a la liste des noms de fichiers audio avec le libellé de la classe qui leur correspond
         wavfiles_namedir: le nom de dossier où il y les audiofiles
            
     Returns:
         
-        renvoie 3 variables qui seront utilisées dans les autres fonctions       
-       df : dataframe contient les données dans le fichier excel 
-       classes : contient les noms des classes qui seront utilisés dans l'apprentissage 
-       class
-       
-
-    Raises:
-        IOError: An error occurred accessing the bigtable.Table object.
-    """
-    
-    
-    
-    
-    
+        renvoie 2 variables qui seront utilisées dans les autres fonctions       
+        df : dataframe contient les données dans le fichier excel 
+        classes : contient les noms des classes qui seront utilisés dans l'apprentissage 
+   
+    """   
     # Récupération de fichier Excel ou il y a le file name avec label correspond
     df = pd.read_csv(csv_namefile)
     df.set_index('fname',inplace=True)#df.set_index : Défini l'index DataFrame à l'aide des colonnes existantes.
@@ -107,8 +98,18 @@ def plot_mfccs(mfccs):
             axes[x,y].get_yaxis().set_visible(False)
             i += 1
 
-# Le nettoyage des échantillons: calcule l'enveloppe du signal
-def Cleaning(y, rate, threshold): #y = signal à nettouyer , threshold = le seuil minimal qu'un signal peut atteindre
+
+def Cleaning(y, rate, threshold):
+    """Le nettoyage des échantillons: calcule l'enveloppe du signal
+    Args:
+        y: le signal à nettoyer
+        rate : Le débit du signal considéré définit le nombre de millions de transitions par seconde.
+        threshold : le seuil minimal qu'un signal peut atteindre
+           
+    Returns:
+        
+        renvoie l'enveloppe du signal considéré pour qu'il soit appliqué au signal initial afin d'éliminer les amplitudes mortes( mask = enveloppe )
+    """   
     mask=[]#liste des true et false depend du seuil 
        
     y=pd.Series(y).apply(np.abs)#Transforme le signal en serie entre 0 et 1 
@@ -119,20 +120,33 @@ def Cleaning(y, rate, threshold): #y = signal à nettouyer , threshold = le seui
             mask.append(True)
         else:
             mask.append(False)
-    return mask #retourne mask pour qu'il soit appliquer sur le signal initial (les mask = enveloppe )
+    return mask #
 
 
-# Fonction du calcul pour fft , elle retourne le signal en fonction de freq
 def calc_fft(y, rate):# y = signal 
+    """Fonction du calcul pour la fonction fft 
+    Args:
+        y: le signal à tracer
+        rate : Le débit du signal considéré définit le nombre de millions de transitions par seconde.
+           
+    Returns:
+        
+        renvoie le signal en fonction de frequence
+    """   
     n=len(y) # la longeur du signal
     freq =  np.fft.rfftfreq(n, d=1/rate) #fft.rfftfreq : Renvoie les fréquences d'échantillonnage de la transformée de Fourier discrète (pour une utilisation avec rfft, irfft).
     Y = abs(np.fft.rfft(y)/n) #fft.rfft : Calcule la transformée de Fourier discrète unidimensionnelle pour une entrée réelle.
     return [Y,freq] #retourne le couple Y et freq de chaque signal pour tracer le fft
 
-# Tracage de pie_chart des pistes
-def pie_chart(df):# df : dataframe , class_dist , c'est deux varibales sont déjà initialisées à l'aide de la fonction Init
-    class_dist = df.groupby(['label'])['length'].mean() #calcule da la longueur moyenne de les pistes regroupées par nom de classe
 
+def pie_chart(df):
+    
+    """Fonction du Tracage de pie_chart des pistes
+        df: Trame de données précédemment initialisée à l'aide de la fonction Init         
+    Returns:
+        Trace la pie_chart des pistes existantes dans DF    
+    """   
+    class_dist = df.groupby(['label'])['length'].mean() #calcule da la longueur moyenne de les pistes regroupées par nom de classe utilisé dans le tracage de pie chart
     # Tracage de pie chart
     fig, ax = plt.subplots()
     ax.set_title('Class Distribution', y=1.08)
@@ -143,9 +157,17 @@ def pie_chart(df):# df : dataframe , class_dist , c'est deux varibales sont déj
     plt.show()
     df.reset_index(inplace=True)
 
-# Le calcule et le tracage des fonctions ; fft , mfccs, fbank ..
-def built_plot_signal(df,classes,wavfiles_namedir):#df et classes: les noms des classes, sont 2 varibales déjà initialiser à l'aide de la fonction Init 
-    # Initialisation des varibale pour le tracage 
+
+def built_plot_signal(df,classes,wavfiles_namedir):
+   
+    """Fonction du calcule et du tracage des fonctions ; fft , mfccs, fbank ..
+        df: Trame de données précédemment initialisée à l'aide de la fonction Init    
+        classes : les noms des classes précédemment récupérées de DF dans la fonction Init
+    Returns:
+        Trace fft , TS , MFCC, Fbank des classes.
+    """   
+    
+# Initialisation des varibale pour le tracage 
     signals = {}
     fft = {}
     fbank = {}
@@ -181,9 +203,16 @@ def built_plot_signal(df,classes,wavfiles_namedir):#df et classes: les noms des 
     plot_mfccs(mfccs)
     plt.show()
 
-# Enregistrement des pistes néttoyées dans le dossier 'clean4' 
-def save_clean_wavfiles(df,clean_namedir, wavfiles_namedir):
  
+def save_clean_wavfiles(df,clean_namedir, wavfiles_namedir):
+    
+    """Fonction qui pernet de nettoyer et enregistrer les pistes néttoyées dans le dossier 'clean4' 
+        df: Trame de données précédemment initialisée à l'aide de la fonction Init    
+        clean_namedir : le nom du dossier où nous enregistrons les pistes nettoyées
+        wavfiles_namedir : le nom de dossier où il y les audiofiles
+    Returns:
+       les fichiers audio sont enregistrés dans le clean_namedir
+    """   
     if len(os.listdir(clean_namedir)) == 0 :#si le dossier Clean est vide nous procédons au nettoyage
         for f in tqdm(df.fname):#Boucler sur les morceaux de chaque classe
             signal,rate = librosa.load(wavfiles_namedir +'/'+f,sr=16000)#recupéré le wavfile qui le correspond
