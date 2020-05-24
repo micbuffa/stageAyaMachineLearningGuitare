@@ -104,8 +104,8 @@ def build_rand_feat(csv_namefile,clean_namedir,config):
     
     """fonction pour la préparation des échantillons  
     Args:
+        csv_namefile: le nom du fichier excel où il y a la liste des noms de fichiers audio avec le libellé de la classe qui leur correspond
         clean_namedir : le nom du dossier où nous enregistrons les pistes nettoyées
-        wavfiles_namedir : le nom de dossier où il y les audiofiles       
         config : une instance de la classes configuration 
           
     Returns:
