@@ -18,10 +18,30 @@ import matplotlib.pyplot as plt
 #Initialiser les vaiables utilisées dans les fonctions
 csv_namefile = 'effets_guitare.csv'#le fichier excel 
 clean_namedir = 'clean4' #Le dossier des wavfile nettoyés
-config = config()
+config = config()#instance la classe de configuration 
 
 def Init (csv_namefile,clean_namedir):
           
+    """Initialise les variables du programme
+    Args:
+        csv_namefile: le nom du fichier excel où il y a la liste des noms de fichiers audio avec le libellé de la classe qui leur correspond
+        clean_namedir: le nom de dossier où il y les audiofiles nettoyés 
+           
+    Returns:
+        
+        renvoie 5 variables qui seront utilisées dans les autres fonctions       
+        df : dataframe contient les données dans le fichier excel 
+        classes : contient les noms des classes qui seront utilisés dans l'apprentissage 
+        class_dist : contient les libellés des classes et la longueur moyenne de chacune d'elles
+        n_samples :le nombre des échantillons de 1/10s dans les wavfiles qui sont en fait possibles dans les signaux en se basant sur 'length'
+        prob_dist :La probabilité associée à chaque entrée (classe)
+        exemple : 
+            Chorus          0.249651
+            Nickel-Power    0.250399
+            Phaser_         0.249551
+            Reverb          0.250399
+        
+    """   
     # Téléchargement du fichier Excel qui contient le nom de la piste avec label qui le correspond       
     df = pd.read_csv(csv_namefile)
     df.set_index('fname', inplace=True)#df.set_index : Défini fname dans DataFrame à l'aide des colonnes existantes.
@@ -42,11 +62,16 @@ def Init (csv_namefile,clean_namedir):
     
     return df, classes , class_dist , n_samples , prob_dist #Init initilise les varibeles qui seront utilisées dans les autres fonctions
 
-
-
     
-# Verifier si il existe déjà des échantillons préparées pour éviter la répétition du travail 
 def check_samples(config):
+    """fonction de vérification :Verifier si il existe déjà des échantillons préparées pour éviter la répétition du travail 
+    Args:
+        config : une instance de la classes configuration 
+          
+    Returns:
+        renvoie les deux matrices X et Y préparées pour le modèle ,qui sont enregistrées dans le dossier 'samples4'
+        sinon rien 
+    """        
     if os.path.isfile(config.samples_path) :#verifier si le dossier samples4(contient X et Y du modele) est vide ou non
         print('Loading existing samples {} for model'.format(config.mode))
         with open(config.samples_path,'rb') as handle:
@@ -55,11 +80,19 @@ def check_samples(config):
     else:
         return None
     
-    
 
-# Creation des échantillons    
 def build_rand_feat(csv_namefile,clean_namedir,config):
     
+    """fonction pour la préparation des échantillons  
+    Args:
+        csv_namefile: le nom du fichier excel où il y a la liste des noms de fichiers audio avec le libellé de la classe qui leur correspond
+        clean_namedir : le nom du dossier où nous enregistrons les pistes nettoyées
+        config : une instance de la classes configuration 
+          
+    Returns:
+        renvoie Trainin set : train_x , train_y et validation set : valid_x , valid_y
+    """ 
+        
     # Initialiser les varibales qui seront utilisés dans cette fonction seulement
     df, classes , class_dist , n_samples , prob_dist = Init(csv_namefile,clean_namedir)
          
@@ -126,9 +159,16 @@ def build_rand_feat(csv_namefile,clean_namedir,config):
 
 
 
+def get_conv_model( input_shape):
+    
+    """fonction pour la préparation de modele convolutionnel
+    Args:
+        input_shape : forme des données d'entrées de RN
+          
+    Returns:
+        renvoie le modele
+    """ 
 
-# Modele convolutionnel
-def get_conv_model( input_shape): #input_shape : forme des données d'entrées de RN
     model = Sequential()#Un modèle séquentiel convient à une pile de couches simples
     model.add(Conv2D(16,(3,3),activation='relu',strides=(1,1),
                       padding='same', input_shape=input_shape))
@@ -159,9 +199,19 @@ def get_conv_model( input_shape): #input_shape : forme des données d'entrées d
     return model
 
 
-# La fonction qui nous permet de former le RN en utilisant une set de validation manuelle
 def Train(model_path,train_X,train_y,valid_X,valid_y,rndir_path):
-    #rndir_path : le chemin (dans le fichier ‘rn-1’)  où on sauvegarde les poids à chaque itération si l’erreur en validation est inférieure à la plus petite déjà calculée
+    
+    """fonction d'apprentissage : nous permet de former notre RN en utilisant une set de validation manuelle 
+    Args:
+        model_path :le chemin du dossier 'models4' où nous enregistrerons notre modèle formé
+        train_X , train_Y : les matrices d'apprentissage
+        valid_X, valid_y : les matrices de validation
+        rndir_path : le chemin du dossier ‘rn-1’ où on sauvegarde les poids à chaque itération si l’erreur en validation est inférieure à la plus petite déjà calculée
+        
+    Returns:
+        Trace les courbes d'accuracy et loss de notre modele formé et affiche le score de validation et de l'entrainement
+    """ 
+    #
 
     callbacks_list= []#C'est une liste des checkpoint , Il ya deux : une pour  accuracy et l'autre pour loss
     y_flat = np.argmax(train_y, axis=1)#np.argmax : Renvoie les indices des valeurs
