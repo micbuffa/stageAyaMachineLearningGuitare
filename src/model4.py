@@ -60,7 +60,6 @@ def Init(csv_namefile,clean_namedir):
     return df, classes , class_dist , n_samples , prob_dist# Init initilise les varibeles qui seront utilisées dans les autres fonctions
         
 
-
 def check_config(config):
     """fonction de vérification : Verifier si il existe déja une configuration pour le modele pour éviter la répétition du travail 
     Args:
@@ -97,8 +96,7 @@ def check_samples(config):
             return samp
     else:
         return None
-    
-    
+      
 
 def build_rand_feat(csv_namefile,clean_namedir,config):
     
@@ -204,7 +202,6 @@ def get_conv_model(input_shape):
                       #à la mise à l'échelle diagonale des gradients et convient bien aux problèmes importants en 
                       #termes de données / paramètres
     return model
-
 
 
 def Train(model_path,X , y ,csv_namefile,clean_namedir):
