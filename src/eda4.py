@@ -45,7 +45,13 @@ def Init (csv_namefile,wavfiles_namedir):
 
 # Tracage des diffents fonctions : mfcc , fft, ..  (les fonctions sont prédéfinie)     
 def plot_signals(signals):
-    
+    """Tracage de Time series
+    Args:
+        signals : le signal à tracer 
+           
+    Returns:
+        trace Time series de chaque piste
+    """   
     fig, axes = plt.subplots(nrows=2, ncols=2, sharex=False,
                              sharey=True, figsize=(20,10))
     fig.suptitle('Time Series', size=20)
@@ -58,6 +64,13 @@ def plot_signals(signals):
             axes[x,y].get_yaxis().set_visible(False)
             i += 1
 def plot_fft(fft):
+    """Tracage de Fourier Transforms
+    Args:
+        fft : le signal généré par la fonction fft à tracer
+           
+    Returns:
+        trace Fourier Transforms de chaque piste
+    """
     fig, axes = plt.subplots(nrows=2, ncols=2, sharex=False,
                               sharey=True, figsize=(20,10))
     fig.suptitle('Fourier Transforms', size=16)
@@ -72,6 +85,13 @@ def plot_fft(fft):
             axes[x,y].get_yaxis().set_visible(False)
             i += 1
 def plot_fbank(fbank):
+    """Tracage Filter Bank Coefficients
+    Args:
+        fbank : le signal généré par la fonction fbank à tracer
+           
+    Returns:
+        trace Filter Bank Coefficients de chaque piste
+    """
     fig, axes = plt.subplots(nrows=2, ncols=2, sharex=False,
                               sharey=True, figsize=(20,10))
     fig.suptitle('Filter Bank Coefficients', size=16)
@@ -85,6 +105,13 @@ def plot_fbank(fbank):
             axes[x,y].get_yaxis().set_visible(False)
             i += 1
 def plot_mfccs(mfccs):
+    """Tracage FMel Frequency Cepstrum Coefficients
+    Args:
+        mfccs : le signal généré par la fonction mfccs à tracer
+           
+    Returns:
+        trace Mel Frequency Cepstrum Coefficients de chaque piste
+    """
     fig, axes = plt.subplots(nrows=2, ncols=2, sharex=False,
                               sharey=True, figsize=(20,5))
     fig.suptitle('Mel Frequency Cepstrum Coefficients', size=16)
@@ -122,8 +149,7 @@ def Cleaning(y, rate, threshold):
             mask.append(False)
     return mask #
 
-
-def calc_fft(y, rate):# y = signal 
+def calc_fft(y, rate):
     """Fonction du calcul pour la fonction fft 
     Args:
         y: le signal à tracer
@@ -137,7 +163,6 @@ def calc_fft(y, rate):# y = signal
     freq =  np.fft.rfftfreq(n, d=1/rate) #fft.rfftfreq : Renvoie les fréquences d'échantillonnage de la transformée de Fourier discrète (pour une utilisation avec rfft, irfft).
     Y = abs(np.fft.rfft(y)/n) #fft.rfft : Calcule la transformée de Fourier discrète unidimensionnelle pour une entrée réelle.
     return [Y,freq] #retourne le couple Y et freq de chaque signal pour tracer le fft
-
 
 def pie_chart(df):
     
@@ -157,12 +182,12 @@ def pie_chart(df):
     plt.show()
     df.reset_index(inplace=True)
 
-
 def built_plot_signal(df,classes,wavfiles_namedir):
-   
     """Fonction du calcule et du tracage des fonctions ; fft , mfccs, fbank ..
         df: Trame de données précédemment initialisée à l'aide de la fonction Init    
         classes : les noms des classes précédemment récupérées de DF dans la fonction Init
+        wavfiles_namedir: le nom de dossier où il y les audiofiles 
+
     Returns:
         Trace fft , TS , MFCC, Fbank des classes.
     """   
@@ -202,10 +227,8 @@ def built_plot_signal(df,classes,wavfiles_namedir):
 
     plot_mfccs(mfccs)
     plt.show()
-
  
 def save_clean_wavfiles(df,clean_namedir, wavfiles_namedir):
-    
     """Fonction qui pernet de nettoyer et enregistrer les pistes néttoyées dans le dossier 'clean4' 
         df: Trame de données précédemment initialisée à l'aide de la fonction Init    
         clean_namedir : le nom du dossier où nous enregistrons les pistes nettoyées
