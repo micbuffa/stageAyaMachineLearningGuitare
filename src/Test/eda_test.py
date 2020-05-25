@@ -15,8 +15,18 @@ wavfiles_namedir = 'wavfiles_test' #le dossier des wavfiles de test avant nettoy
 class_de_test = 'LaGrange-Guitars'
 
 def Init (csv_namefile,wavfiles_namedir):
-    
-    # Récupération de fichier Excel ou il y a le file name avec label correspond
+    """Initialise les variables du programme
+    Args:
+        csv_namefile: le nom du fichier excel où il y a la liste des noms de fichiers audio de test avec le libellé de la classe qui leur correspond
+        wavfiles_namedir: le nom de dossier où il y l'audiofile de test
+           
+    Returns:
+        
+        renvoie une variable qui sera utilisée dans les autres fonctions       
+        df : dataframe contient les données de test dans le fichier excel 
+   
+    """   
+        # Récupération de fichier Excel ou il y a le file name avec label correspond
     df = pd.read_csv(csv_namefile)#index de 0 à 23 (nombre de wavfiles dans le fichier excel)
     df.set_index('fname',inplace=True)#df.set_index : Défini l'index DataFrame à l'aide des colonnes existantes.
 
@@ -26,14 +36,17 @@ def Init (csv_namefile,wavfiles_namedir):
         df.at[f,'length'] = signal.shape[0]/rate#pour chaque wavfile , on calcule la longeur par la formule 
 
 
-    #calcule da la longueur moyenne de les pistes regroupées par nom de classe
-    class_dist = df.groupby(['label'])['length'].mean()
-
-    return df, class_dist #ces 2 varibales sont utilisées dans les autres fonctions
+    return df #la varibale est utilisée dans les autres fonctions
 
 # Tracage des diffents fonctions : mfcc , fft, ..  (les fonctions sont prédéfinie)     
 def plot_signals(signals):
-    
+    """Tracage de Time series
+    Args:
+        signals : le signal à tracer 
+           
+    Returns:
+        trace Time series de chaque piste
+    """   
     fig, axes = plt.subplots(nrows=1, ncols=1, sharex=False,squeeze =False,
                              sharey=True, figsize=(20,10))
     fig.suptitle('Time Series', size=20)
@@ -45,8 +58,14 @@ def plot_signals(signals):
             axes[x,y].get_xaxis().set_visible(False)
             axes[x,y].get_yaxis().set_visible(False)
             i += 1
-            
 def plot_fft(fft):
+    """Tracage de Fourier Transforms
+    Args:
+        fft : le signal généré par la fonction fft à tracer
+           
+    Returns:
+        trace Fourier Transforms de chaque piste
+    """
     fig, axes = plt.subplots(nrows=1, ncols=1, sharex=False,squeeze =False,
                               sharey=True, figsize=(20,10))
     fig.suptitle('Fourier Transforms', size=20)
@@ -60,8 +79,14 @@ def plot_fft(fft):
             axes[x,y].get_xaxis().set_visible(False)
             axes[x,y].get_yaxis().set_visible(False)
             i += 1
-            
 def plot_fbank(fbank):
+    """Tracage Filter Bank Coefficients
+    Args:
+        fbank : le signal généré par la fonction fbank à tracer
+           
+    Returns:
+        trace Filter Bank Coefficients de chaque piste
+    """
     fig, axes = plt.subplots(nrows=1, ncols=1, sharex=False,squeeze =False,
                               sharey=True, figsize=(20,10))
     fig.suptitle('Filter Bank Coefficients', size=20)
@@ -74,8 +99,14 @@ def plot_fbank(fbank):
             axes[x,y].get_xaxis().set_visible(False)
             axes[x,y].get_yaxis().set_visible(False)
             i += 1
-            
 def plot_mfccs(mfccs):
+    """Tracage FMel Frequency Cepstrum Coefficients
+    Args:
+        mfccs : le signal généré par la fonction mfccs à tracer
+           
+    Returns:
+        trace Mel Frequency Cepstrum Coefficients de chaque piste
+    """
     fig, axes = plt.subplots(nrows=1, ncols=1, sharex=False,squeeze =False,
                               sharey=True, figsize=(20,5))
     fig.suptitle('Mel Frequency Cepstrum Coefficients', size=20)
@@ -89,9 +120,17 @@ def plot_mfccs(mfccs):
             axes[x,y].get_yaxis().set_visible(False)
             i += 1
 
-
-# Le nettoyage des échantillons: calcule l'enveloppe du signal
-def Cleaning(y, rate, threshold):#y = signal à nettouyer , threshold = le seuil minimal qu'un signal peut atteindre
+def Cleaning(y, rate, threshold):
+    """Le nettoyage des échantillons: calcule l'enveloppe du signal de test
+    Args:
+        y: le signal de test à nettoyer
+        rate : Le débit du signal considéré définit le nombre de millions de transitions par seconde.
+        threshold : le seuil minimal qu'un signal peut atteindre
+           
+    Returns:
+        renvoie l'enveloppe du signal considéré pour qu'il soit appliqué au signal initial afin d'éliminer les amplitudes mortes( mask = enveloppe )
+    """   
+    
     mask=[]#liste des true et false depend du seuil 
        
     y=pd.Series(y).apply(np.abs)#Transforme le signal en serie entre 0 et 1 
@@ -104,31 +143,29 @@ def Cleaning(y, rate, threshold):#y = signal à nettouyer , threshold = le seuil
             mask.append(False)
     return mask
 
-
-# Fonction du calcul pour fft , elle retourne le signal en fonction de freq
 def calc_fft(y, rate):
+    """Fonction du calcul pour la fonction fft 
+    Args:
+        y: le signal de test à tracer
+        rate : Le débit du signal considéré définit le nombre de millions de transitions par seconde.
+           
+    Returns:
+        renvoie le signal en fonction de frequence
+    """   
     n=len(y)# y = signal 
     n=len(y) # la longeur du signal
     freq =  np.fft.rfftfreq(n, d=1/rate) #fft.rfftfreq : Renvoie les fréquences d'échantillonnage de la transformée de Fourier discrète (pour une utilisation avec rfft, irfft).
     Y = abs(np.fft.rfft(y)/n) #fft.rfft : Calcule la transformée de Fourier discrète unidimensionnelle pour une entrée réelle.
     return [Y,freq] #retourne le couple Y et freq de chaque signal pour tracer le fft
 
-# Tracage de pie_chart des pistes
-def pie_chart(class_dist,df):# df : dataframe , class_dist , c'est deux varibales sont déjà initialisées à l'aide de la fonction Init
-    
-    # Tracage de pie chart
-    fig, ax = plt.subplots()
-    ax.set_title('Class Distribution', y=1.08)
-    ax.pie(class_dist,labels=class_dist.index , autopct='%1.1f%%',shadow=False 
-           , startangle=90)
-
-    ax.axis('equal')
-    plt.show()
-    df.reset_index(inplace=True)
-
-# Le calcule et le tracage des fonctions ; fft , mfccs, fbank ..
-def built_plot_signal(wavfiles_namedir,df,class_de_test):#df et class_de_test: le nom de la classe de test, sont 2 varibales déjà initialiser 
-    # Initialisation des varibale pour le tracage 
+def built_plot_signal(wavfiles_namedir,df,class_de_test):
+    """Fonction du calcule et du tracage des fonctions ; fft , mfccs, fbank ..
+        wavfiles_namedir : le nom de dossier où il y l'audiofile de test
+        df: Trame de données de test précédemment initialisée à l'aide de la fonction Init    
+        class_de_test : le noms de la classe de test
+    Returns:
+        Trace fft , TS , MFCC, Fbank de la classe de test
+    """   
  
     signals = {}
     fft = {}
@@ -164,8 +201,14 @@ def built_plot_signal(wavfiles_namedir,df,class_de_test):#df et class_de_test: l
     plot_mfccs(mfccs)
     plt.show()
 
-# Enregistrement des pistes néttoyées dans le dossier 'clean_test' 
 def save_clean_wavfiles(clean_namedir, wavfiles_namedir,df):
+    """Fonction qui pernet de nettoyer et enregistrer la piste de test néttoyées dans le dossier 'clean_test' 
+        df: Trame de données de test précédemment initialisée à l'aide de la fonction Init    
+        clean_namedir : le nom du dossier où nous enregistrons la piste de test nettoyées
+        wavfiles_namedir : le nom de dossier où il y l'audiofile de test
+    Returns:
+       le fichier audio est  enregistré dans le clean_namedir
+    """   
 
     if len(os.listdir(clean_namedir)) == 0 :#si le dossier Clean_test est vide nous procédons au nettoyage
         for f in tqdm(df.fname):#Boucler sur les morceaux de la classe de test
@@ -175,9 +218,6 @@ def save_clean_wavfiles(clean_namedir, wavfiles_namedir,df):
    
 # Initialiser les varibales      
 df,class_dist = Init(csv_namefile,wavfiles_namedir)
-
-# Taracage de pie chart
-pie_chart(class_dist,df)
 
 # Tracage des fonctions fft mfccs ..
 built_plot_signal(wavfiles_namedir,df,class_de_test)
