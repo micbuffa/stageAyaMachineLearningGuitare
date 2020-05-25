@@ -15,8 +15,22 @@ csv_namefile2 = 'effets_guitare.csv'#le fichier excel des classes utilisées pou
 csv_namefile = 'LaGrange-Guitars.csv' #le fichier excel de wavfile de test 
 clean_namedir =  'Test/clean_test' #le chemin de dossier de wavfile nettoyé de la classe de test
 
-# La fonction qui intitialise les variables 
 def Init (csv_namefile,csv_namefile2):
+    
+    """Initialise les variables du programme
+    Args:
+        csv_namefile: le nom du fichier excel où il y a la liste des noms de fichiers audio de test avec le libellé de la classe qui leur correspond           
+        csv_namefile2: le nom du fichier excel où il y a la liste des noms de fichiers audio d'apprentissage avec le libellé de la classe qui leur correspond           
+
+    Returns:
+        
+        renvoie 4 variables qui seront utilisées dans les autres fonctions       
+        df : dataframe contient les données de test dans le fichier excel 
+        classes : contient les noms des classes qui ont été utilisées dans l'apprentissage
+        model : le modele formé et enregistré dans le dossier 'models4'
+        config : les configurations utilisées dans la formation du modele
+   
+    """   
     df = pd.read_csv(csv_namefile)# Téléchargement du fichier Excel qui contient le nom de la piste de test avec label qui le correspond    
     df2 = pd.read_csv(csv_namefile2)# Téléchargement du fichier Excel qui contient le nom des pistes d'apprentissage avec label qui le correspond    
 
@@ -31,11 +45,22 @@ def Init (csv_namefile,csv_namefile2):
 
     return df , classes , model,config
 
-
-
-
-# La fonction qui nous calcule la prédiciton 
 def build_predictions(clean_namedir,config,model):
+    """fonction qui génère des prédictions de sortie pour les échantillons d'entrée.
+    Args:
+        clean_namedir : le nom du dossier où nous enregistrons les pistes de test nettoyées
+        config : les configuration récupérées dans la fonction INIT
+        model : le modele formé récupéré
+                  
+    Returns:
+        renvoie 
+            index_prob : dictionnaire : clé : chaque 1/10s a sa probabilité pour les 4 classes
+            exemple : 100ms =1/10s [0.85,0.25,0.003,0.90]
+            ...
+            index_class : dictionnaire : clé :chaque 1/10s a l'indice de classe qui a la plus forte probabilité
+            exemple : 100ms : 3(l'indice de la probabilité la plus élevé(0.90) -> 3 = Reverb)
+            
+    """ 
 
     index_prob = {}#dictionnaire : chaque 1/10s a sa probabilité pour les 4 classes
     index_class ={}#dictionnaire : chaque 1/10s a l'indice de classe qui a la plus forte probabilité
@@ -54,7 +79,7 @@ def build_predictions(clean_namedir,config,model):
                        nfft = config.nfft )#préparation de l'échantillon en utilisant la formule mfccs
             x =( x - config.min) / (config.max - config.min) #normaliser le X avec les valeurs min et max qui sont déjà calculées a la phase de l'apprentissage 
             x = x.reshape(1,x.shape[0],x.shape[1], 1)#remodeler X sans modifier ses données pour l'adapter au modèle convolutionnel
-            y_hat = model.predict(x)#la probabilité de X  d'etre chaque classe , sa forme : [0.8954995 , 0,0256264, 0,1684461,0.2556898] ,chaque valeur correspond a une classe
+            y_hat = model.predict(x)#la probabilité que X soit chaque classe, sa forme : [0.8954995 , 0,0256264, 0,1684461,0.2556898] ,chaque valeur correspond a une classe
             
    
 
@@ -64,13 +89,21 @@ def build_predictions(clean_namedir,config,model):
 
 
     return  index_prob,index_class
-  
     
-  
-# La fonction qui rend l'interpretation de la prédiction calculée sous forme des graphes           
 def Prediction(clean_namedir,config,df,classes,model):
-    
-    # Construction des prédictions : retourne les dictionnaires pour le tracage
+    """fonction rend l'interpretation de la prédiction calculée sous forme des graphes
+    Args:
+        clean_namedir : le nom du dossier où nous enregistrons les pistes de test nettoyées
+        config : les configuration récupérées dans la fonction INIT
+        df: Trame de données de test précédemment initialisée à l'aide de la fonction Init  
+        classes : contient les noms des classes utilisés dans l'apprentissage du modele
+        model : le modele formé récupéré
+                          
+    Returns:
+       Affiche les graphes de prédictions pour la classe de test 
+                    
+    """ 
+        # Construction des prédictions : retourne les dictionnaires pour le tracage
     index_prob ,index_class= build_predictions(clean_namedir,config,model)
     # index_prob : clé: temps en ms , valeur : les 4 probabilités pour chaque classe
     # index_class : clé : temps en ms , valeur : l'indice de classe qui a la plus forte probabilité 
@@ -81,14 +114,18 @@ def Prediction(clean_namedir,config,df,classes,model):
     plot_prediction_probabilities(index_prob,10000)
     plot_prediction_classes(index_class, classes,10000,df)
     
-    
-    
-    
-    
+def plot_prediction_probabilities(index_prob,pas):
 
-    
-#Le tracage des résultats de la prédiction (probabilités)
-def plot_prediction_probabilities(index_prob,pas):#Fonction à modifier
+    """fonction qui trace les résultats de la prédiction en fonction des probabilités
+    Args:
+        index_prob : dictionnaire : clé : chaque 1/10s de piste de test, valeur: sa probabilité pour les 4 classes
+        pas : le pas d'axe d'abscisses (Temps)
+    Returns:
+         
+        trace le graphe de variation des prédictions pour chaque classe d'apprentissage (4 courbes meme figure)
+            
+    """ 
+
     Chorus =[]#liste des probabilités pour Chorus tout au long la piste
     Reverb =[]#liste des probabilités pour Reverb tout au long la piste
     Phaser_ =[]#liste des probabilités pour Phaser_ tout au long la piste
@@ -130,8 +167,17 @@ def plot_prediction_probabilities(index_prob,pas):#Fonction à modifier
     plt.legend(prop={"size":10},loc='upper left')
     plt.show()
 
-#Le tracage des résultats de la prédiction (classes)
-def plot_prediction_classes(index_class,classes,pas,df):#Fonction à modifier
+def plot_prediction_classes(index_class,classes,pas,df):
+    """fonction qui trace les résultats de la prédiction en fonction des classes
+    Args:
+        index_class : dictionnaire : clé : chaque 1/10s de piste de test, valeur: l'indice de la classe qui a la plus forte probabilité 
+        classes : contient les noms des classes qui ont été utilisées dans l'apprentissage
+        pas : le pas d'axe d'abscisses (Temps)
+        df : dataframe contient les données de test dans fichier excel 
+
+    Returns:
+        trace le graphe de variation des prédictions pour la piste de test (en fonction des classes)
+    """ 
     x=[]#liste de temps (1/10s)
     classe=[]#liste des libellés de classes correspondant aux probabilités
     temps_pas = pas # le pas de l'axe des abscisse (10000ms = 10 s)
@@ -171,9 +217,9 @@ def plot_prediction_classes(index_class,classes,pas,df):#Fonction à modifier
     plt.title('la variation des prédictions du RN (test)') 
     plt.show()
  
+    
 # Initialiser les variables à l'aide de la fonction Init 
 df , classes , model, config = Init(csv_namefile,csv_namefile2)   
-
 #Récuperer y_pred pour tracer les resultats 
 Prediction(clean_namedir,config,df,classes,model)
 
