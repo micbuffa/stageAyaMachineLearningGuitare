@@ -16,8 +16,20 @@ csv_namefile = 'effets_guitare.csv'#le fichier excel
 clean_namedir = 'clean4' #Le dossier des wavfile nettoyés
 prediction_namecsv ='predictions_4pistes.csv' #Le nom de fichier excel résultant aprés la prédiction
 
-# La fonction qui intitialise les variables 
 def Init (csv_namefile):
+    """Initialise les variables du programme
+    Args:
+        csv_namefile: le nom du fichier excel où il y a la liste des noms de fichiers audio avec le libellé de la classe qui leur correspond           
+    Returns:
+        
+        renvoie 5 variables qui seront utilisées dans les autres fonctions       
+        df : dataframe contient les données dans le fichier excel 
+        classes : contient les noms des classes qui ont été utilisées dans l'apprentissage
+        fn2class : un dictionnaire où clé : filename et valeur : label
+        model : le modele formé et enregistré dans le dossier 'models4'
+        config : les configurations utilisées dans la formation du modele
+   
+    """   
     df = pd.read_csv(csv_namefile) # Téléchargement du fichier Excel qui contient le nom de la piste avec label qui le correspond       
 
     classes = list(np.unique(df.label))#récupérer les labels des classes apartir de df sans répitition de ces labels
@@ -33,13 +45,26 @@ def Init (csv_namefile):
     return df , classes , fn2class,model,config
 
 
-
-# La fonction qui nous retourne la prédiciton 
 def build_predictions(clean_namedir,config,df,classes,model):
-
+    """fonction qui génère des prédictions de sortie pour les échantillons d'entrée.
+    Args:
+        clean_namedir : le nom du dossier où nous enregistrons les pistes nettoyées
+        config : les configuration récupérées dans la fonction INIT
+        df: Trame de données précédemment initialisée à l'aide de la fonction Init  
+        classes : contient les noms des classes utilisés dans l'apprentissage
+        model : le modele formé récupéré
+                  
+    Returns:
+        renvoie 
+            y_true : sont les vraies données
+            y_pred : sont les résultats de modèle
+            fn_prob : dictionnaire : clé : filenames , valeur : la moyenne des probabilités pour la même classe d'apprentissage (tout au long de la piste audio)
+            
+    """ 
     y_true = [] #liste des inputs (avant l'interpretation)
     y_pred = [] # liste des ouputs (apres l'interpretation)
-    fn_prob = {} #ensemble de filenames avec la moyenne de leurs probabilités q'ils les correspond (Apres prediction)
+    fn_prob = {} #dictionnaire, clé: nom du fichier, valeur: la moyenne des probabilités pour la même classe d'apprentissage (tout au long de la piste audio)
+     #exemple : Chorus : [0.82,0.002,0.12,0.2]
     
     print('Extracting features from audio')
     
@@ -55,7 +80,7 @@ def build_predictions(clean_namedir,config,df,classes,model):
                        nfft = config.nfft ) #préparation de l'échantillon en utilisant la formule mfccs
             x =( x - config.min) / (config.max - config.min) #normaliser le X avec les valeurs min et max qui sont déjà calculées a la phase de l'apprentissage
             x = x.reshape(1,x.shape[0],x.shape[1], 1)#remodeler X sans modifier ses données pour l'adapter au modèle convolutionnel
-            y_hat = model.predict(x)#la probabilité de X  d'etre chaque classe , sa forme : [0.8954995 , 0,0256264, 0,1684461,0.2556898] ,chaque valeur correspond a une classe
+            y_hat = model.predict(x)#la probabilité que X soit chaque classe, sa forme : [0.8954995 , 0,0256264, 0,1684461,0.2556898] ,chaque valeur correspond a une classe
             y_prob.append(y_hat)#rassembler les probabilités du même wavfile (chaque prob correspond au 1/10s de wavfiles encours)
             y_pred.append(np.argmax(y_hat))#y_pred : contient les indices des classes prédites ou la probabilité etait la plus élévé
    
@@ -63,7 +88,7 @@ def build_predictions(clean_namedir,config,df,classes,model):
             
             
         fn_prob[fn] = np.mean(y_prob , axis = 0).flatten()
-        #chaque fichier wav de 8s nous l'avons coupé en échantillons de 1 / 10s, chaque échantillon nous avons calculé la probabilité d'être l'une des classes
+        #chaque fichier wav  nous l'avons coupé en échantillons de 1 / 10s, chaque échantillon nous avons calculé la probabilité d'être l'une des classes
         # nous avons rassemblé ces probabilités dans une liste que nous avons appelée y_prob
         # donc en conclusion pour chaque fichier wav il y a une liste de probabilités
         # pour obtenir la probabilité moyenne du fichier wav pour chaque classe, on applique np.mean sur chaque colonne de probabilités correspondant à la même classe
@@ -71,13 +96,26 @@ def build_predictions(clean_namedir,config,df,classes,model):
 
     return y_true, y_pred , fn_prob 
   
-# La fonction qui rend l'interpretation de la prédiction calculée            
-def Prediction(clean_namedir,prediction_namecsv,config,df,classes,model):
-    # Construction des prédictions
-    y_true , y_pred , fn_prob = build_predictions(clean_namedir,config,df,classes,model)
-    #y_true contient l'indice de la bonne classe à prévoir pour chaque fichier wav
-    #y_pred contient l'indice de la classe prédite pour chaque fichier wav
-
+          
+def Prediction(clean_namedir,prediction_namecsv,config,df,classes,model,y_true,y_pred,fn_prob):
+    """fonction rend l'interprétation des résultats en tant que fichier Excel
+    Args:
+        clean_namedir : le nom du dossier où nous enregistrons les pistes nettoyées
+        prediction_namecsv : le nom du fichier de résultats (en csv)
+        config : les configuration récupérées dans la fonction INIT
+        df: Trame de données précédemment initialisée à l'aide de la fonction Init  
+        classes : contient les noms des classes utilisés dans l'apprentissage
+        model : le modele formé récupéré
+        y_true contient l'indice de la bonne classe à prévoir pour chaque fichier wav
+        y_pred contient l'indice de la classe prédite pour chaque fichier wav
+        fn_prob : dictionnaire : clé : filenames , valeur : la moyenne des probabilités pour la même classe d'apprentissage (tout au long de la piste audio)
+        exemple : Chorus : [0.82,0.002,0.12,0.2]
+                  
+    Returns:
+       Affiche le score de précision en % et génére un fichier Excel de resultat
+         
+            
+    """ 
     # Calcul d' Accuracy score : pour calculer le score de précision, nous avons besoin de données réelles et de données prédites
     acc_score = accuracy_score(y_true= y_true, y_pred = y_pred)
 
@@ -87,11 +125,11 @@ def Prediction(clean_namedir,prediction_namecsv,config,df,classes,model):
 
     # Enregistrement de résulat dans DF 
     y_probs =[]#la liste des probabilités
-    for i, row in df.iterrows():#loop sur les lignes des DF (124 lignes)
-        y_prob = fn_prob[row.fname] #On récupére la ligne des probilités pour chaque file name qui le correspond
-        #fn_prob : disctionnaire clé/ valeur , filename/probabilités  ex : Chorus_0 : [0.82,0.01,0.16,0.23]
-        y_probs.append(y_prob) #ajouer à la liste des probabilités ([val, val , val , val])
-        for c , p in zip(classes,y_prob):# c boucle sur classes(Chorus , Nickel-Power , ..) , et p sur y_prob qu'on récupéré
+    for i, row in df.iterrows():#loop sur les lignes des DF (4 lignes)
+        y_prob = fn_prob[row.fname] #On récupére la ligne des probabilités pour chaque file name qui le correspond
+        #fn_prob : disctionnaire clé/ valeur , filename/probabilités  ex : Chorus : [0.82,0.01,0.16,0.23]
+        y_probs.append(y_prob) #ajouter à la liste des probabilités ([val, val , val , val])
+        for c , p in zip(classes,y_prob):# c boucle sur classes(Chorus , Nickel-Power , ..) , et p sur y_prob qu'on a récupéré
             df.at[i, c] =p #pour le même fichier wav il y a 4 probabilités, chacune correspondant à une classe
    
     
@@ -100,14 +138,19 @@ def Prediction(clean_namedir,prediction_namecsv,config,df,classes,model):
 
     #Transformer DataFrame en un fichier csv pour visualiser les résultats
     df.to_csv(prediction_namecsv,index = False) 
+ 
     
-    return y_true , y_pred #retourner y_true et y_pred pour calculer la matrice de confusion
-
-
-
-# Tracage de la matrice de confusion (fonction prédéfinie)
-def plot_confusion_matrix(cm, classes,normalize=False,title='Confusion matrix',cmap=plt.cm.Blues):
-    
+def plot_confusion_matrix(cm, classes,normalize=False,title='Confusion matrix',cmap=plt.cm.Greys):
+    """fonction qui trace la matrice de confusion (fonction prédéfinie)
+    Args:
+        cm : contient le resultat de confusion_matrix de y_true et y_pred
+        classes : les noms des classes de notre modele 
+        normalize : si True donc la matrice sera tracé avec des 1 et 0 , sinon avec les valeures réelles
+        cmap  : la couleur de représentation de la matrice
+    Returns:
+       Trace la matrice de confusion
+            
+    """ 
     import itertools
     if normalize:
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
@@ -135,8 +178,16 @@ def plot_confusion_matrix(cm, classes,normalize=False,title='Confusion matrix',c
     plt.xlabel('Predicted label')
     plt.tight_layout()
 
-# Calcule de la matrice de confusion
+
 def confusion_matrix_fct(y_true, y_pred): #Cette fonction est besoin de y_pred et y_true
+    """fonction qui Calcule de la matrice de confusion pour la fonction de tracage 
+    Args:
+        y_true contient l'indice de la bonne classe à prévoir pour chaque fichier wav
+        y_pred contient l'indice de la classe prédite pour chaque fichier wav
+    Returns:
+       tAffiche la matrice de confusion
+            
+    """ 
     cnf_matrix = confusion_matrix(y_true, y_pred, labels=[0,1,2,3])
     np.set_printoptions(precision=2)
     # Plot non-normalized confusion matrix
@@ -146,8 +197,11 @@ def confusion_matrix_fct(y_true, y_pred): #Cette fonction est besoin de y_pred e
 
 # Initialiser les variables à l'aide de la fonction Init 
 df , classes , fn2class , model,config = Init(csv_namefile)
-#Récuperer y_predict et y_true et calculer la précision  
-y_true , y_pred = Prediction(clean_namedir,prediction_namecsv,config,df,classes,model)
+# Construction des prédictions
+y_true , y_pred , fn_prob = build_predictions(clean_namedir,config,df,classes,model)
+
+#Calculer la précision  et l'affichage de la matrice de confusion
+Prediction(clean_namedir,prediction_namecsv,config,df,classes,model,y_true,y_pred,fn_prob)
 confusion_matrix_fct(y_true,y_pred)
     
 
