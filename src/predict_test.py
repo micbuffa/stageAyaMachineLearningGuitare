@@ -6,7 +6,7 @@ from scipy.io import wavfile
 from python_speech_features import mfcc
 from keras.models import load_model
 import pandas as pd
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt,mpld3
 from cfg4 import config
 
 
@@ -61,12 +61,8 @@ def build_predictions(clean_namedir,config,model):
             exemple : 100ms : 3(l'indice de la probabilité la plus élevé(0.90) -> 3 = Reverb)
             
     """ 
-
     index_prob = {}#dictionnaire : chaque 1/10s a sa probabilité pour les 4 classes
     index_class ={}#dictionnaire : chaque 1/10s a l'indice de classe qui a la plus forte probabilité
-
-    
-    
     print('Extracting features from audio')
     
     for fn in tqdm(os.listdir(clean_namedir)):#loop sur les filennames des morceaux de wavfile de test nettoyé
@@ -81,8 +77,6 @@ def build_predictions(clean_namedir,config,model):
             x = x.reshape(1,x.shape[0],x.shape[1], 1)#remodeler X sans modifier ses données pour l'adapter au modèle convolutionnel
             y_hat = model.predict(x)#la probabilité que X soit chaque classe, sa forme : [0.8954995 , 0,0256264, 0,1684461,0.2556898] ,chaque valeur correspond a une classe
             
-   
-
             index_prob[t] = y_hat #t : temps en ms , chaque 100ms = 1/10s, y_hat : la probabilité de chaque classes pour la meme 1/10s
             index_class[t]=np.argmax(y_hat) #t : temps en ms , chaque 100ms = 1/10s,np.argmax(y_hat) : renvoie l'indice de classe qui a la plus forte probabilité pour ce 1 / 10s
             t +=100# 100 ms = 1/10s = 0.1s
@@ -91,6 +85,7 @@ def build_predictions(clean_namedir,config,model):
     return  index_prob,index_class
     
 def Prediction(clean_namedir,config,df,classes,model):
+    
     """fonction rend l'interpretation de la prédiction calculée sous forme des graphes
     Args:
         clean_namedir : le nom du dossier où nous enregistrons les pistes de test nettoyées
@@ -113,6 +108,9 @@ def Prediction(clean_namedir,config,df,classes,model):
 
     plot_prediction_probabilities(index_prob,10000)
     plot_prediction_classes(index_class, classes,10000,df)
+    plot_EMA(index_prob,10000,1000)
+ 
+
     
 def plot_prediction_probabilities(index_prob,pas):
 
@@ -145,26 +143,31 @@ def plot_prediction_probabilities(index_prob,pas):
         x.append(ind)
 
     # La taille de graphe 
-    plt.figure(figsize=(200,10))
+    p=plt.figure(1,figsize=(40,10))
     # Tracage de chaque courbe => courbe : les probabilités d'une classe
     plt.plot(x, Chorus, color='black', label="Chorus",linewidth = 2,
               markersize=10) 
-    plt.plot(x, Nickel_Power,label="Nickel-Power", color='red', linewidth = 2,
+   
+    plt.plot(x,Nickel_Power,label="Nickel-Power", color='red', linewidth = 2,
              markersize=10) 
+    
     
     plt.plot(x, Phaser_, color='blue',label="Phaser_", linewidth = 2,
             markersize=10)
+   
     
     plt.plot(x, Reverb, color='green',label="Reverb", linewidth = 2,
               markersize=10) 
+    
  
     #Le pas utilisées dans le graphe  = 10000ms = 10s
-    plt.xticks(np.arange(0, len(x)*100, temps_pas))
+    # plt.xticks(np.arange(0, len(x)*100, temps_pas))
     plt.xlim(0 ,len(x)*100)
     plt.xlabel('Time (ms)') 
     plt.ylabel('probabilities') 
     plt.title('la variation des prédictions du RN (test)') 
     plt.legend(prop={"size":10},loc='upper left')
+    mpld3.save_html(p,'plot_prediction_probabilities.html')
     plt.show()
 
 def plot_prediction_classes(index_class,classes,pas,df):
@@ -181,7 +184,6 @@ def plot_prediction_classes(index_class,classes,pas,df):
     x=[]#liste de temps (1/10s)
     classe=[]#liste des libellés de classes correspondant aux probabilités
     temps_pas = pas # le pas de l'axe des abscisse (10000ms = 10 s)
-    
     
     # les valeurs de l'axe des abscisses et des ordonnées
     # ind : temps 
@@ -205,22 +207,106 @@ def plot_prediction_classes(index_class,classes,pas,df):
 
     # plt.xticks(rotation=90, ha='right')
     #la taille de graphe
-    plt.figure(figsize=(200,10))
+    p1=plt.figure(1,figsize=(40,10))
     plt.plot(x, classe, color='black',linewidth = 2,marker='.', 
              markerfacecolor='red', markersize=20) 
     #len(x) : nombre de 1 / 10s dans la piste
     #len(x)*100 : pour récupérer la derniere valeur dans la liste de temps
-    plt.xticks(np.arange(0, len(x)*100, temps_pas))
+    # plt.xticks(np.arange(0, len(x)*100, temps_pas))
     plt.xlim(0 ,len(x)*100)
     plt.xlabel('Time (ms)') 
     plt.ylabel('classes') 
     plt.title('la variation des prédictions du RN (test)') 
+    mpld3.save_html(p1,'plot_prediction_classes.html')
     plt.show()
  
     
+def plot_EMA(index_prob,pas,window):
+    """fonction qui trace la moyenne mobile exponentielle pour chaque classe d'apprentissage
+    Args:
+        index_prob : dictionnaire : clé : chaque 1/10s de piste de test, valeur: sa probabilité pour les 4 classes
+        pas : le pas d'axe d'abscisses (Temps)
+    Returns:
+         
+        trace le graphe d'EMA pour chaque classe d'apprentissage (4 courbes meme figure)
+            
+    """ 
+    Chorus =[]#liste des probabilités pour Chorus tout au long la piste
+    Reverb =[]#liste des probabilités pour Reverb tout au long la piste
+    Phaser_ =[]#liste des probabilités pour Phaser_ tout au long la piste
+    Nickel_Power = []#liste des probabilités pour Nickel-Power tout au long la piste
+    x= []#liste de temps ( 1/10s )
+    temps_pas = pas # le pas de l'axe des abscisse (10000ms = 10 s)
+
+    # les valeurs de l'axe des abscisses et des ordonnées
+    # ind : temps 
+    # val : list des probabilités ,va[0][0] : prob Chorus , va[0][1] : prob Nickel-Power 
+    # , va[0][2]: prob Phaser_ ,va[0][3] : prob Reverb
+    for ind , val in index_prob.items():
+        Chorus.append(val[0][0])
+        Reverb.append(val[0][3])
+        Phaser_.append(val[0][2])
+        Nickel_Power.append(val[0][1])
+        x.append(ind)
+
+    # La taille de graphe 
+    p2=plt.figure(1,figsize=(40,10))
+    # Tracage de chaque courbe => courbe : EMA d'une classe
+    EMA =Exponential_moving_average(Chorus,window)
+    plt.plot( x,EMA, color='black', label="Chorus_EMA",linewidth = 2,
+              markersize=10) 
+
+    EMA =Exponential_moving_average(Nickel_Power,window)
+    plt.plot( x,EMA, color='red', label="Nickel-Power_EMA",linewidth = 2,
+              markersize=10) 
+    
+    
+    EMA =Exponential_moving_average(Phaser_,window)
+    plt.plot( x,EMA, color='blue', label="Phaser_EMA",linewidth = 2,
+              markersize=10) 
+    
+    
+    EMA =Exponential_moving_average(Reverb,window)
+    plt.plot( x,EMA, color='green', label="Reverb_EMA",linewidth = 2,
+              markersize=10) 
+ 
+    #Le pas utilisées dans le graphe  = 10000ms = 10s
+    # plt.xticks(np.arange(0, len(x)*100, temps_pas))
+    plt.xlim(0 ,len(x)*100)
+    plt.xlabel('Time (ms)') 
+    plt.ylabel('probabilities') 
+    plt.title('la variation des prédictions du RN (test)') 
+    plt.legend(prop={"size":10},loc='upper left')
+    mpld3.save_html(p2,' plot_EMA.html')
+
+    plt.show() 
+
+
+def Exponential_moving_average(classe_probs,window):
+    """fonction qui calcule la moyenne mobile expo d'une liste de probabilités d'une classe
+    une moyenne mobile exponentielle consiste à valoriser davantage les données les plus récentes, tout en lissant les lignes
+    Args:
+        class_probs : liste des probabilités pour une classe d'apprentissage tout au long la piste de test
+        window : est le nombre d'échantillons à considérer
+    Returns:
+        Calcule de EMA de la liste 
+    """ 
+    #la fonction ewm de pandas ne peut pas être appliquée directement sur une liste, 
+    #seule une trame de données peut l'utiliser, donc j'ai créé une trame de données 
+    #qui contient les classes_probs uniquement pour en calculer la ewm et j'ai utilisé
+    #comme taille de fenêtre = 1000, moyenne mobile par 1 s
+    data = {'classe_probs' : classe_probs}
+    pred_df = pd.DataFrame(data)   
+    ema=pred_df.ewm(span = window).mean()
+    return ema
+ 
+    
 # Initialiser les variables à l'aide de la fonction Init 
+
+
+
 df , classes , model, config = Init(csv_namefile,csv_namefile2)   
-#Récuperer y_pred pour tracer les resultats 
+#Récuperer y_pred pour tracer les resulTemps (1/10s=100ms)classe_probstats 
 Prediction(clean_namedir,config,df,classes,model)
 
 
