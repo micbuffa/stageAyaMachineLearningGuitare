@@ -10,7 +10,7 @@ from sklearn.utils.class_weight import compute_class_weight
 from tqdm import tqdm
 from python_speech_features import mfcc
 import pickle
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, EarlyStopping
 from cfg4 import config
 import matplotlib.pyplot as plt
 
@@ -236,10 +236,11 @@ def Train(model_path,X , y ,csv_namefile,clean_namedir):
                              save_best_only=True, save_weights_only=False, period=1)
     #Modelcheckpoint :Callback pour enregistrer le modèle Keras ou les poids de modèle à une certaine
     #fréquence.Dans ce cas , il est utilisé pour calculer l'accuracy et sauvegarder le dernier meilleur modèle en fonction de la quantité surveillée
-
-    history = model.fit(X, y , epochs=10,batch_size=32,
+    es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=8)
+    history = model.fit(X, y , epochs=12,batch_size=32,
                         shuffle =True, class_weight=class_weight, validation_split=0.1 , 
-                        callbacks = [checkpoint])
+                        callbacks = [checkpoint,es])
+    print(es)
     
     #history : Forme le modèle pour un nombre fixe d'époques avec une validation automatique 
     model.save(model_path)#Enregistre le modèle formé dans un fichier pour une utilisation ultérieure
