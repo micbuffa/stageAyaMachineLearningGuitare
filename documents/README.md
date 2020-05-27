@@ -42,7 +42,14 @@
     3.Elimination des varibales globales 
     5.Correction du probleme du coupage des pistes en petits morceaux 
 
+ ## Modification de 27/05/2020 :
+    1.L'ajout des commentaires pour les fonctions 
+    2.L'ajout de la fonction Plot_EMA pour le tracage de la moyenne mobille exponentielle
+    3.L'ajout de Zooming & brushing dans les graphes 
+
     
+
+   
 
 
 
