@@ -165,7 +165,7 @@ def plot_prediction_probabilities(index_prob):
     mpld3.save_html(p,'plot_prediction_probabilities.html')#mpld3.save_html : permet de sauvegarder le graphe en tant que page html
     #la page est sauvegardée dans src
     plt.show()
-    mpld3.show() #si vous voulez visualiser le graphe une fois exécuter le programme , le navigateur ouvre automatiquement
+    #mpld3.show() #si vous voulez visualiser le graphe une fois exécuter le programme , le navigateur ouvre automatiquement
 
 def plot_prediction_classes(index_class,classes,df):
     """fonction qui trace les résultats de la prédiction en fonction des classes
