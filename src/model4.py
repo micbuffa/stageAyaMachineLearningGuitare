@@ -237,7 +237,7 @@ def Train(model_path,X , y ,csv_namefile,clean_namedir):
     #Modelcheckpoint :Callback pour enregistrer le modèle Keras ou les poids de modèle à une certaine
     #fréquence.Dans ce cas , il est utilisé pour calculer l'accuracy et sauvegarder le dernier meilleur modèle en fonction de la quantité surveillée
     es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=8)
-    history = model.fit(X, y , epochs=12,batch_size=32,
+    history = model.fit(X, y , epochs=9,batch_size=32,
                         shuffle =True, class_weight=class_weight, validation_split=0.1 , 
                         callbacks = [checkpoint,es])
     print(es)
