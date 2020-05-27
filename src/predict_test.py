@@ -155,6 +155,15 @@ def plot_prediction_probabilities(index_prob):
     plt.plot(x, Reverb, color='green',label="Reverb", linewidth = 2,
               markersize=10) 
     
+    
+    data = {'Temps (1/10s=100ms)' : x ,'Chorus ' : Chorus,
+            'Nickel-Power ' : Nickel_Power,'Phaser ' : Phaser_,
+            'Reverb ' : Reverb}
+    pred_df = pd.DataFrame(data)   
+    pred_df.to_csv('Probabilité_classe_predictions.csv',index = False, sep =';')
+    pred_df.to_json('Probabilité_classe_predictions.json', orient='split') 
+
+    
     #len(x) : nombre de 1 / 10s dans la piste
     #len(x)*100 : pour récupérer la derniere valeur dans la liste de temps
     plt.xlim(0 ,len(x)*100)
@@ -164,7 +173,7 @@ def plot_prediction_probabilities(index_prob):
     plt.legend(prop={"size":10},loc='upper left')
     mpld3.save_html(p,'plot_prediction_probabilities.html')#mpld3.save_html : permet de sauvegarder le graphe en tant que page html
     #la page est sauvegardée dans src
-    plt.show()
+    # plt.show()
     #mpld3.show() #si vous voulez visualiser le graphe une fois exécuter le programme , le navigateur ouvre automatiquement
 
 def plot_prediction_classes(index_class,classes,df):
@@ -197,12 +206,14 @@ def plot_prediction_classes(index_class,classes,df):
     
     data = {'Temps (1/10s=100ms)' : x ,'Output_pred ' : classe}
     pred_df = pd.DataFrame(data)   
-    pred_df.to_csv(df.label[0] +'_predictions.csv',index = False) 
-     
+    # pred_df.to_csv(df.label[0] +'_predictions.csv',index = False) 
+    pred_df.to_csv('Classes_predictions.csv',index = False, sep =';')
+    pred_df.to_json('Classes_predictions.json', orient='split') 
+
 
     # plt.xticks(rotation=90, ha='right')
     #la taille de graphe
-    p1=plt.figure(1,figsize=(50,5))
+    p1=plt.figure(2,figsize=(50,5))
     plt.plot(x, classe, color='black',linewidth = 2,marker='.', 
              markerfacecolor='red', markersize=20) 
     #len(x) : nombre de 1 / 10s dans la piste
@@ -211,9 +222,9 @@ def plot_prediction_classes(index_class,classes,df):
     plt.xlabel('Time (ms)') 
     plt.ylabel('classes') 
     plt.title('la variation des prédictions du RN (test)') 
-    mpld3.save_html(p1,'plot_prediction_classes.html')#mpld3.save_html : permet de sauvegarder le graphe en tant que page html
+    # mpld3.save_html(p1,'plot_prediction_classes.html')#mpld3.save_html : permet de sauvegarder le graphe en tant que page html
     #la page est sauvegardée dans src
-    plt.show()
+    # plt.show()
  
     
 def plot_EMA(index_prob,window):
@@ -241,24 +252,34 @@ def plot_EMA(index_prob,window):
         x.append(ind)
 
     # La taille de graphe 
-    p2=plt.figure(1,figsize=(50,5))
+    p2=plt.figure(3,figsize=(100,5))
     # Tracage de chaque courbe => courbe : EMA d'une classe
-    EMA =Exponential_moving_average(Chorus,window)
-    plt.plot( x,EMA, color='black', label="Chorus_EMA",linewidth = 2,
+    EMA_C =Exponential_moving_average(Chorus,window)
+    plt.plot( x,EMA_C, color='black', label="Chorus_EMA",linewidth = 2,
               markersize=10) 
 
-    EMA =Exponential_moving_average(Nickel_Power,window)
-    plt.plot( x,EMA, color='red', label="Nickel-Power_EMA",linewidth = 2,
+    EMA_NP =Exponential_moving_average(Nickel_Power,window)
+    plt.plot( x,EMA_NP, color='red', label="Nickel-Power_EMA",linewidth = 2,
               markersize=10) 
     
-    EMA =Exponential_moving_average(Phaser_,window)
-    plt.plot( x,EMA, color='blue', label="Phaser_EMA",linewidth = 2,
+    EMA_P =Exponential_moving_average(Phaser_,window)
+    plt.plot( x,EMA_P, color='blue', label="Phaser_EMA",linewidth = 2,
               markersize=10) 
     
-    EMA =Exponential_moving_average(Reverb,window)
-    plt.plot( x,EMA, color='green', label="Reverb_EMA",linewidth = 2,
+    EMA_R =Exponential_moving_average(Reverb,window)
+    plt.plot( x,EMA_R, color='green', label="Reverb_EMA",linewidth = 2,
               markersize=10) 
  
+    data = {'Temps (1/10s=100ms)' : x ,
+            'Chorus_EMA ' : EMA_C['classe_probs'],
+            'Nickel-Power_EMA ' : EMA_NP['classe_probs'],
+            'Phaser_EMA ' : EMA_P['classe_probs'],
+            'Reverb_EMA ' : EMA_R['classe_probs']}
+    pred_df = pd.DataFrame(data) 
+    pred_df.to_csv('EMA_predictions.csv',index = False,sep =';')
+    pred_df.to_json('EMA_predictions.json', orient='split')
+    
+    
     #len(x) : nombre de 1 / 10s dans la piste
     #len(x)*100 : pour récupérer la derniere valeur dans la liste de temps
     plt.xlim(0 ,len(x)*100)
@@ -266,9 +287,9 @@ def plot_EMA(index_prob,window):
     plt.ylabel('probabilities') 
     plt.title('la variation des prédictions du RN (test)') 
     plt.legend(prop={"size":10},loc='upper left')
-    mpld3.save_html(p2,' plot_EMA.html')#mpld3.save_html : permet de sauvegarder le graphe en tant que page html
+    # mpld3.save_html(p2,' plot_EMA.html')#mpld3.save_html : permet de sauvegarder le graphe en tant que page html
     #la page est sauvegardée dans src
-    plt.show() 
+    # plt.show() 
 
 
 def Exponential_moving_average(classe_probs,window):
