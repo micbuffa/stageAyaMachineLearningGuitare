@@ -103,21 +103,18 @@ def Prediction(clean_namedir,config,df,classes,model):
     # index_prob : clé: temps en ms , valeur : les 4 probabilités pour chaque classe
     # index_class : clé : temps en ms , valeur : l'indice de classe qui a la plus forte probabilité 
 
-    #Tracage de la variation de la prédiction
-    #le pas de l'axe des abscisses : 10000ms = 10 s 
-
-    plot_prediction_probabilities(index_prob,10000)
-    plot_prediction_classes(index_class, classes,10000,df)
-    plot_EMA(index_prob,10000,1000)
+    #Tracage des graphes de resultat
+    plot_prediction_probabilities(index_prob)
+    plot_prediction_classes(index_class, classes,df)
+    plot_EMA(index_prob,1000)
  
 
     
-def plot_prediction_probabilities(index_prob,pas):
+def plot_prediction_probabilities(index_prob):
 
     """fonction qui trace les résultats de la prédiction en fonction des probabilités
     Args:
         index_prob : dictionnaire : clé : chaque 1/10s de piste de test, valeur: sa probabilité pour les 4 classes
-        pas : le pas d'axe d'abscisses (Temps)
     Returns:
          
         trace le graphe de variation des prédictions pour chaque classe d'apprentissage (4 courbes meme figure)
@@ -129,7 +126,6 @@ def plot_prediction_probabilities(index_prob,pas):
     Phaser_ =[]#liste des probabilités pour Phaser_ tout au long la piste
     Nickel_Power = []#liste des probabilités pour Nickel-Power tout au long la piste
     x= []#liste de temps ( 1/10s )
-    temps_pas = pas # le pas de l'axe des abscisse (10000ms = 10 s)
 
     # les valeurs de l'axe des abscisses et des ordonnées
     # ind : temps 
@@ -143,7 +139,7 @@ def plot_prediction_probabilities(index_prob,pas):
         x.append(ind)
 
     # La taille de graphe 
-    p=plt.figure(1,figsize=(40,10))
+    p=plt.figure(1,figsize=(50,5))
     # Tracage de chaque courbe => courbe : les probabilités d'une classe
     plt.plot(x, Chorus, color='black', label="Chorus",linewidth = 2,
               markersize=10) 
@@ -159,23 +155,23 @@ def plot_prediction_probabilities(index_prob,pas):
     plt.plot(x, Reverb, color='green',label="Reverb", linewidth = 2,
               markersize=10) 
     
- 
-    #Le pas utilisées dans le graphe  = 10000ms = 10s
-    # plt.xticks(np.arange(0, len(x)*100, temps_pas))
+    #len(x) : nombre de 1 / 10s dans la piste
+    #len(x)*100 : pour récupérer la derniere valeur dans la liste de temps
     plt.xlim(0 ,len(x)*100)
     plt.xlabel('Time (ms)') 
     plt.ylabel('probabilities') 
     plt.title('la variation des prédictions du RN (test)') 
     plt.legend(prop={"size":10},loc='upper left')
-    mpld3.save_html(p,'plot_prediction_probabilities.html')
+    mpld3.save_html(p,'plot_prediction_probabilities.html')#mpld3.save_html : permet de sauvegarder le graphe en tant que page html
+    #la page est sauvegardée dans src
     plt.show()
+    mpld3.show() #si vous voulez visualiser le graphe une fois exécuter le programme , le navigateur ouvre automatiquement
 
-def plot_prediction_classes(index_class,classes,pas,df):
+def plot_prediction_classes(index_class,classes,df):
     """fonction qui trace les résultats de la prédiction en fonction des classes
     Args:
         index_class : dictionnaire : clé : chaque 1/10s de piste de test, valeur: l'indice de la classe qui a la plus forte probabilité 
         classes : contient les noms des classes qui ont été utilisées dans l'apprentissage
-        pas : le pas d'axe d'abscisses (Temps)
         df : dataframe contient les données de test dans fichier excel 
 
     Returns:
@@ -183,7 +179,6 @@ def plot_prediction_classes(index_class,classes,pas,df):
     """ 
     x=[]#liste de temps (1/10s)
     classe=[]#liste des libellés de classes correspondant aux probabilités
-    temps_pas = pas # le pas de l'axe des abscisse (10000ms = 10 s)
     
     # les valeurs de l'axe des abscisses et des ordonnées
     # ind : temps 
@@ -207,36 +202,32 @@ def plot_prediction_classes(index_class,classes,pas,df):
 
     # plt.xticks(rotation=90, ha='right')
     #la taille de graphe
-    p1=plt.figure(1,figsize=(40,10))
+    p1=plt.figure(1,figsize=(50,5))
     plt.plot(x, classe, color='black',linewidth = 2,marker='.', 
              markerfacecolor='red', markersize=20) 
     #len(x) : nombre de 1 / 10s dans la piste
     #len(x)*100 : pour récupérer la derniere valeur dans la liste de temps
-    # plt.xticks(np.arange(0, len(x)*100, temps_pas))
     plt.xlim(0 ,len(x)*100)
     plt.xlabel('Time (ms)') 
     plt.ylabel('classes') 
     plt.title('la variation des prédictions du RN (test)') 
-    mpld3.save_html(p1,'plot_prediction_classes.html')
+    mpld3.save_html(p1,'plot_prediction_classes.html')#mpld3.save_html : permet de sauvegarder le graphe en tant que page html
+    #la page est sauvegardée dans src
     plt.show()
  
     
-def plot_EMA(index_prob,pas,window):
+def plot_EMA(index_prob,window):
     """fonction qui trace la moyenne mobile exponentielle pour chaque classe d'apprentissage
     Args:
         index_prob : dictionnaire : clé : chaque 1/10s de piste de test, valeur: sa probabilité pour les 4 classes
-        pas : le pas d'axe d'abscisses (Temps)
     Returns:
-         
         trace le graphe d'EMA pour chaque classe d'apprentissage (4 courbes meme figure)
-            
     """ 
     Chorus =[]#liste des probabilités pour Chorus tout au long la piste
     Reverb =[]#liste des probabilités pour Reverb tout au long la piste
     Phaser_ =[]#liste des probabilités pour Phaser_ tout au long la piste
     Nickel_Power = []#liste des probabilités pour Nickel-Power tout au long la piste
     x= []#liste de temps ( 1/10s )
-    temps_pas = pas # le pas de l'axe des abscisse (10000ms = 10 s)
 
     # les valeurs de l'axe des abscisses et des ordonnées
     # ind : temps 
@@ -250,7 +241,7 @@ def plot_EMA(index_prob,pas,window):
         x.append(ind)
 
     # La taille de graphe 
-    p2=plt.figure(1,figsize=(40,10))
+    p2=plt.figure(1,figsize=(50,5))
     # Tracage de chaque courbe => courbe : EMA d'une classe
     EMA =Exponential_moving_average(Chorus,window)
     plt.plot( x,EMA, color='black', label="Chorus_EMA",linewidth = 2,
@@ -260,31 +251,30 @@ def plot_EMA(index_prob,pas,window):
     plt.plot( x,EMA, color='red', label="Nickel-Power_EMA",linewidth = 2,
               markersize=10) 
     
-    
     EMA =Exponential_moving_average(Phaser_,window)
     plt.plot( x,EMA, color='blue', label="Phaser_EMA",linewidth = 2,
               markersize=10) 
-    
     
     EMA =Exponential_moving_average(Reverb,window)
     plt.plot( x,EMA, color='green', label="Reverb_EMA",linewidth = 2,
               markersize=10) 
  
-    #Le pas utilisées dans le graphe  = 10000ms = 10s
-    # plt.xticks(np.arange(0, len(x)*100, temps_pas))
+    #len(x) : nombre de 1 / 10s dans la piste
+    #len(x)*100 : pour récupérer la derniere valeur dans la liste de temps
     plt.xlim(0 ,len(x)*100)
     plt.xlabel('Time (ms)') 
     plt.ylabel('probabilities') 
     plt.title('la variation des prédictions du RN (test)') 
     plt.legend(prop={"size":10},loc='upper left')
-    mpld3.save_html(p2,' plot_EMA.html')
-
+    mpld3.save_html(p2,' plot_EMA.html')#mpld3.save_html : permet de sauvegarder le graphe en tant que page html
+    #la page est sauvegardée dans src
     plt.show() 
 
 
 def Exponential_moving_average(classe_probs,window):
     """fonction qui calcule la moyenne mobile expo d'une liste de probabilités d'une classe
-    une moyenne mobile exponentielle consiste à valoriser davantage les données les plus récentes, tout en lissant les lignes
+    une moyenne mobile exponentielle consiste à valoriser davantage les données 
+    les plus récentes, tout en lissant les lignes
     Args:
         class_probs : liste des probabilités pour une classe d'apprentissage tout au long la piste de test
         window : est le nombre d'échantillons à considérer
@@ -296,8 +286,8 @@ def Exponential_moving_average(classe_probs,window):
     #qui contient les classes_probs uniquement pour en calculer la ewm et j'ai utilisé
     #comme taille de fenêtre = 1000, moyenne mobile par 1 s
     data = {'classe_probs' : classe_probs}
-    pred_df = pd.DataFrame(data)   
-    ema=pred_df.ewm(span = window).mean()
+    ema_df = pd.DataFrame(data)   
+    ema=ema_df.ewm(span = window).mean()
     return ema
  
     
