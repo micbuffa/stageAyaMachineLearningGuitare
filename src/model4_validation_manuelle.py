@@ -117,27 +117,34 @@ def build_rand_feat(csv_namefile,clean_namedir,config):
     # Construction des échantillons
     _min,_max = float('inf'), -float('inf')#pour comprendre la mise à l'échelle pour normaliser les valeurs de loss et acc
     for _ in tqdm(range(n_samples)):#boucle sur les n échantillons qu'on a calculé déjà 
+         rand_class= np.random.choice(class_dist.index,p=prob_dist)#le choix de la classe est aléatoire chaque itération
+         file = np.random.choice(df[df.label==rand_class].index)#recupération de le filename correspondant à la rand_class que nous avons généré
+         rate , wav= wavfile.read(clean_namedir+'/'+file)#récupération de wavfile qui correspond au file
+         label = df.at[file,'label']#récupération le label de la classe qui correspand au file récupéré
+         rand_index=np.random.randint(0,wav.shape[0]-config.step )#Prendre une valeur du signal basée sur la longueur du audio file, échantillonner directement à cet index et prendre 1/10 s
+         sample = wav[rand_index:rand_index+config.step]#l'échantillon est tiré du fichier wav, le début de l'échantillon est rand_index, la longeur de l'échantillon est step = 1/10s 
+         #afin que le modèle puisse discerner très rapidement une classification différente 
+         #rien d'autre que ces 1 / 10s est supprimé
+         X_sample = mfcc(sample,rate,numcep=config.nfeat,nfilt=config.nfilt,
+                       nfft = config.nfft,
+                       winlen=0.032,winstep=0.015)#préparation de l'échantillon en utilisant la formule mfccs
         
-        rand_class= np.random.choice(class_dist.index,p=prob_dist)#le choix de la classe est aléatoire chaque itération
-        file = np.random.choice(df[df.label==rand_class].index)#recupération de le filename correspondant à la rand_class que nous avons généré
-        rate , wav= wavfile.read(clean_namedir+'/'+file)#récupération de wavfile qui correspond au file
-        label = df.at[file,'label']#récupération le label de la classe qui correspand au file récupéré
-        rand_index=np.random.randint(0,wav.shape[0]-config.step )#Prendre une valeur du signal basée sur la longueur du audio file, échantillonner directement à cet index et prendre 1/10 s
-        sample = wav[rand_index:rand_index+config.step]#l'échantillon est tiré du fichier wav, le début de l'échantillon est rand_index, la longeur de l'échantillon est step = 1/10s 
-        #afin que le modèle puisse discerner très rapidement une classification différente 
-        #rien d'autre que ces 1 / 10s est supprimé
-        X_sample = mfcc(sample,rate,numcep=config.nfeat,nfilt=config.nfilt,
-                       nfft = config.nfft )#préparation de l'échantillon en utilisant la formule mfccs
-        _min=min(np.amin(X_sample), _min)#la valeur minimal de loss obtenue a chaque entrainement
-        _max=max(np.amax(X_sample), _max)#la valeur maximal d'accuracy obtenue a chaque entrainement
-        X.append(X_sample) #la matrice X contient les échantillons préparées
-        y.append(classes.index(label))#la matrice Y contient les indices des labels récupérés au début de la loop
+         # MWI norm
+         smin = np.amin(X_sample)
+         smax = np.amax(X_sample)
+         X_sample = (X_sample - np.mean(X_sample)) / (np.std(X_sample)+1e-8)
+        
+        
+         _min=min(np.amin(X_sample), _min)#la valeur minimal de loss obtenue a chaque entrainement
+         _max=max(np.amax(X_sample), _max)#la valeur maximal d'accuracy obtenue a chaque entrainement
+         X.append(X_sample) #la matrice X contient les échantillons préparées
+         y.append(classes.index(label))#la matrice Y contient les indices des labels récupérés au début de la loop
         
     config.min = _min #sauvegarde de la valeur minimal de loss comme attribut de la classe config
     config.max = _max #sauvegarde de la valeur maximal d'accuracy comme attribut de la classe config
     
     X ,y = np.array(X), np.array(y)#tourner x et y en arrays pour garder une trace de min et lmax
-    X = (X - _min) / (_max - _min)#Pour normaliser X 
+    # X = (X - _min) / (_max - _min)#Pour normaliser X 
     
     X = X.reshape(X.shape[0],X.shape[1],X.shape[2], 1)#remodeler X sans modifier ses données pour l'adapter au modèle convolutionnel
     y = to_categorical(y,num_classes=4)#to_categorical : Convertit un vecteur de classe (entiers)(0-3) en matrice de classe binaire.
@@ -159,8 +166,8 @@ def build_rand_feat(csv_namefile,clean_namedir,config):
 
 
 
-def get_conv_model( input_shape):
-    
+def get_conv_model(input_shape): 
+
     """fonction pour la préparation de modele convolutionnel
     Args:
         input_shape : forme des données d'entrées de RN
@@ -168,25 +175,23 @@ def get_conv_model( input_shape):
     Returns:
         renvoie le modele
     """ 
-
     model = Sequential()#Un modèle séquentiel convient à une pile de couches simples
     model.add(Conv2D(16,(3,3),activation='relu',strides=(1,1),
-                      padding='same', input_shape=input_shape))
+                     padding='same', input_shape=input_shape))
     model.add(Conv2D(32,(3,3),activation='relu',strides=(1,1),
-                      padding='same'))
+                     padding='same'))
     model.add(Conv2D(64, (3,3),activation='relu',strides=(1,1),
                       padding='same'))
     model.add(Conv2D(128,(3,3),activation='relu',strides=(1,1),
                       padding='same'))
-    model.add(Conv2D(256,(3,3),activation='relu',strides=(1,1),
-                      padding='same'))
     
-    
-    model.add(MaxPool2D((2,2)))
-    model.add(Dropout(0.1))
+    model.add(MaxPool2D((4,4)))
+    model.add(Dropout(0.5))
     model.add(Flatten())
     model.add(Dense(128,activation='relu'))
+    model.add(Dropout(0.2))
     model.add(Dense(64,activation='relu'))
+    model.add(Dropout(0.1))
     model.add(Dense(4,activation='softmax'))
     model.summary()
     
@@ -197,6 +202,7 @@ def get_conv_model( input_shape):
                       #à la mise à l'échelle diagonale des gradients et convient bien aux problèmes importants en 
                       #termes de données / paramètres
     return model
+
 
 
 def Train(model_path,train_X,train_y,valid_X,valid_y,rndir_path):
@@ -246,7 +252,7 @@ def Train(model_path,train_X,train_y,valid_X,valid_y,rndir_path):
     callbacks_list.append(checkpoint_acc)
     callbacks_list.append(checkpoint_loss)
 
-    history = model.fit(train_X, train_y , epochs=8,batch_size=32,
+    history = model.fit(train_X, train_y , epochs=20,batch_size=32,
           shuffle =True, class_weight=class_weight, validation_data = (valid_X, valid_y), 
           callbacks = callbacks_list)
     #history : Forme le modèle pour un nombre fixe d'époques avec une validation manuelle
