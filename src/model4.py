@@ -10,7 +10,7 @@ from sklearn.utils.class_weight import compute_class_weight
 from tqdm import tqdm
 from python_speech_features import mfcc
 import pickle
-from keras.callbacks import ModelCheckpoint, EarlyStopping
+from keras.callbacks import ModelCheckpoint
 from cfg4 import config
 import matplotlib.pyplot as plt
 
@@ -55,7 +55,7 @@ def Init(csv_namefile,clean_namedir):
     class_dist = df.groupby(['label'])['length'].mean()#calcule da la longueur moyenne de les pistes regroupées par nom de classe
     
     # Création des N sample , la probabilité de distribution et les choices en se basant sur prob_dist
-    n_samples = 2* int(df['length'].sum()/0.1) #le nombre des échantillons de 1/10s dans les wavfiles qui sont en fait possibles dans les signaux
+    n_samples = 4 * int(df['length'].sum()/0.1) #le nombre des échantillons de 1/10s dans les wavfiles qui sont en fait possibles dans les signaux
     prob_dist = class_dist / class_dist.sum()#La probabilité associée à chaque entrée (classe)
     return df, classes , class_dist , n_samples , prob_dist# Init initilise les varibeles qui seront utilisées dans les autres fonctions
         
@@ -139,7 +139,15 @@ def build_rand_feat(csv_namefile,clean_namedir,config):
         #afin que le modèle puisse discerner très rapidement une classification différente 
         #rien d'autre que ces 1 / 10s est supprimé
         X_sample = mfcc(sample,rate,numcep=config.nfeat,nfilt=config.nfilt,
-                       nfft = config.nfft )#préparation de l'échantillon en utilisant la formule mfccs
+                       nfft = config.nfft,
+                       winlen=0.032,winstep=0.015)#préparation de l'échantillon en utilisant la formule mfccs
+        
+        # MWI norm
+        smin = np.amin(X_sample)
+        smax = np.amax(X_sample)
+        X_sample = (X_sample - np.mean(X_sample)) / (np.std(X_sample)+1e-8)
+        
+        
         _min=min(np.amin(X_sample), _min)#la valeur minimal de loss obtenue a chaque entrainement
         _max=max(np.amax(X_sample), _max)#la valeur maximal d'accuracy obtenue a chaque entrainement
         X.append(X_sample) #la matrice X contient les échantillons préparées
@@ -149,7 +157,7 @@ def build_rand_feat(csv_namefile,clean_namedir,config):
     config.max = _max #sauvegarde de la valeur maximal d'accuracy comme attribut de la classe config
     
     X ,y = np.array(X), np.array(y)#tourner x et y en arrays pour garder une trace de min et lmax
-    X = (X - _min) / (_max - _min)#Pour normaliser X 
+    # X = (X - _min) / (_max - _min)#Pour normaliser X 
     
     
     X = X.reshape(X.shape[0],X.shape[1],X.shape[2], 1) #remodeler X sans modifier ses données pour l'adapter au modèle convolutionnel
@@ -183,15 +191,14 @@ def get_conv_model(input_shape):
                       padding='same'))
     model.add(Conv2D(128,(3,3),activation='relu',strides=(1,1),
                       padding='same'))
-    model.add(Conv2D(256,(3,3),activation='relu',strides=(1,1),
-                      padding='same'))
     
-    
-    model.add(MaxPool2D((2,2)))
+    model.add(MaxPool2D((4,4)))
     model.add(Dropout(0.5))
     model.add(Flatten())
     model.add(Dense(128,activation='relu'))
+    model.add(Dropout(0.2))
     model.add(Dense(64,activation='relu'))
+    model.add(Dropout(0.1))
     model.add(Dense(4,activation='softmax'))
     model.summary()
     
@@ -236,11 +243,10 @@ def Train(model_path,X , y ,csv_namefile,clean_namedir):
                              save_best_only=True, save_weights_only=False, period=1)
     #Modelcheckpoint :Callback pour enregistrer le modèle Keras ou les poids de modèle à une certaine
     #fréquence.Dans ce cas , il est utilisé pour calculer l'accuracy et sauvegarder le dernier meilleur modèle en fonction de la quantité surveillée
-    es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=8)
-    history = model.fit(X, y , epochs=9,batch_size=32,
+    history = model.fit(X, y , epochs=20,batch_size=32,
                         shuffle =True, class_weight=class_weight, validation_split=0.1 , 
-                        callbacks = [checkpoint,es])
-    print(es)
+                        callbacks = [checkpoint])
+ 
     
     #history : Forme le modèle pour un nombre fixe d'époques avec une validation automatique 
     model.save(model_path)#Enregistre le modèle formé dans un fichier pour une utilisation ultérieure
