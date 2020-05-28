@@ -9,7 +9,7 @@ class config:
         self.nfft = nfft
         self.rate=rate
 
-        self.step=int(rate/10)
+        self.step=5072 #int(rate/10)
         self.model_path = os.path.join('models4', mode + '.model')
         self.p_path = os.path.join('pickles4', mode + '.p')
         self.samples_path = os.path.join('samples4', 'samples' + '.smp')
