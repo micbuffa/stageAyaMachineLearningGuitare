@@ -72,8 +72,13 @@ def build_predictions(clean_namedir,config,model):
         for i in range(0,wav.shape[0]-config.step, config.step):#loop sur la longueur de wavfile avec un pas de 1/10s
             sample = wav[i:i+config.step]#à chaque iteration , on récupére 1/10s de wavfile
             x = mfcc(sample,rate,numcep=config.nfeat,nfilt=config.nfilt,
-                       nfft = config.nfft )#préparation de l'échantillon en utilisant la formule mfccs
-            x =( x - config.min) / (config.max - config.min) #normaliser le X avec les valeurs min et max qui sont déjà calculées a la phase de l'apprentissage 
+                       nfft = config.nfft,
+                       winlen=0.032,winstep=0.015)#préparation de l'échantillon en utilisant la formule mfccs
+            #x =( x - config.min) / (config.max - config.min) #normaliser le X avec les valeurs min et max qui sont déjà calculées a la phase de l'apprentissage 
+            smin = np.amin(x)
+            smax = np.amax(x)
+            x = (x - np.mean(x)) / (np.std(x)+1e-8)
+            
             x = x.reshape(1,x.shape[0],x.shape[1], 1)#remodeler X sans modifier ses données pour l'adapter au modèle convolutionnel
             y_hat = model.predict(x)#la probabilité que X soit chaque classe, sa forme : [0.8954995 , 0,0256264, 0,1684461,0.2556898] ,chaque valeur correspond a une classe
             
@@ -83,7 +88,7 @@ def build_predictions(clean_namedir,config,model):
 
 
     return  index_prob,index_class
-    
+
 def Prediction(clean_namedir,config,df,classes,model):
     
     """fonction rend l'interpretation de la prédiction calculée sous forme des graphes
@@ -222,7 +227,7 @@ def plot_prediction_classes(index_class,classes,df):
     plt.xlabel('Time (ms)') 
     plt.ylabel('classes') 
     plt.title('la variation des prédictions du RN (test)') 
-    # mpld3.save_html(p1,'plot_prediction_classes.html')#mpld3.save_html : permet de sauvegarder le graphe en tant que page html
+    mpld3.save_html(p1,'plot_prediction_classes.html')#mpld3.save_html : permet de sauvegarder le graphe en tant que page html
     #la page est sauvegardée dans src
     # plt.show()
  
@@ -287,7 +292,7 @@ def plot_EMA(index_prob,window):
     plt.ylabel('probabilities') 
     plt.title('la variation des prédictions du RN (test)') 
     plt.legend(prop={"size":10},loc='upper left')
-    # mpld3.save_html(p2,' plot_EMA.html')#mpld3.save_html : permet de sauvegarder le graphe en tant que page html
+    mpld3.save_html(p2,' plot_EMA.html')#mpld3.save_html : permet de sauvegarder le graphe en tant que page html
     #la page est sauvegardée dans src
     # plt.show() 
 
