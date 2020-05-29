@@ -29,12 +29,13 @@ def Init (csv_namefile,wavfiles_namedir):
         # Récupération de fichier Excel ou il y a le file name avec label correspond
     df = pd.read_csv(csv_namefile)#index de 0 à 23 (nombre de wavfiles dans le fichier excel)
     df.set_index('fname',inplace=True)#df.set_index : Défini l'index DataFrame à l'aide des colonnes existantes.
-
+   
     # Récupération des pistes et le calcul de leurs longueur
-    for f in df.index :#index de 0 à 24 (nombre de wavfiles dans le fichier excel)
+    for f in df.index :
         rate, signal = wavfile.read(wavfiles_namedir +'/'+f)#Récupérer le wavfile
         df.at[f,'length'] = signal.shape[0]/rate#pour chaque wavfile , on calcule la longeur par la formule 
-
+    
+    df.reset_index(inplace=True)
 
     return df #la varibale est utilisée dans les autres fonctions
 
@@ -134,7 +135,7 @@ def Cleaning(y, rate, threshold):
     mask=[]#liste des true et false depend du seuil 
        
     y=pd.Series(y).apply(np.abs)#Transforme le signal en serie entre 0 et 1 
-    y_mean= y.rolling(window=int(rate/10),min_periods=1, center=True).mean()#(Provide rolling window calculations on every 1/10s of signal) 
+    y_mean= y.rolling(window=int(rate/100),min_periods=1, center=True).mean()#(Provide rolling window calculations on every 1/10s of signal) 
  
     for mean in y_mean:#si la valeur du signal > le seuil , donc elle est acceptée sinon supprimée
         if mean > threshold:
@@ -172,11 +173,10 @@ def built_plot_signal(wavfiles_namedir,df,class_de_test):
     fbank = {}
     mfccs = {}
 
-   
-    wav_file= df[df.label == class_de_test].iloc[0,0]# Puisque on a une seule classe donc on recupere le filename de col = 0 et row = 0
+    wav_file = df[df.label == class_de_test].iloc[0,0]#on verifie si le label sélectionné par la loop est le meme que dans DF alors on recupere la premiere de col = 0 et row = 0
     signal, rate = librosa.load(wavfiles_namedir+'/'+wav_file, sr = 44100 )#on charge le wavfile correspondant au filename
     
-    mask = Cleaning(signal, rate, 0.0005)#Calculer le mask de wavfile récupéré
+    mask = Cleaning(signal, rate, 0.02)#Calculer le mask de wavfile récupéré
     signal = signal[mask]#Envelopper le signal par le mask calculé 
 
     #faire le tracage en utilisant le siganl nettoyé
@@ -213,11 +213,11 @@ def save_clean_wavfiles(clean_namedir, wavfiles_namedir,df):
     if len(os.listdir(clean_namedir)) == 0 :#si le dossier Clean_test est vide nous procédons au nettoyage
         for f in tqdm(df.fname):#Boucler sur les morceaux de la classe de test
             signal,rate = librosa.load(wavfiles_namedir +'/'+f,sr=16000)#recupéré le wavfile qui le correspond
-            mask=Cleaning(signal,rate,0.0005) #calcul du mask du signal récupéré
+            mask=Cleaning(signal,rate,0.02) #calcul du mask du signal récupéré
             wavfile.write(filename=clean_namedir +'/'+f,rate=rate,data=signal[mask]) #sauvegarder le wavfile nettoyé dans le dossier Clean_test
    
 # Initialiser les varibales      
-df,class_dist = Init(csv_namefile,wavfiles_namedir)
+df = Init(csv_namefile,wavfiles_namedir)
 
 # Tracage des fonctions fft mfccs ..
 built_plot_signal(wavfiles_namedir,df,class_de_test)
