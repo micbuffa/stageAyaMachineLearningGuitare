@@ -30,12 +30,13 @@ def Init (csv_namefile,wavfiles_namedir):
     df = pd.read_csv(csv_namefile)
     df.set_index('fname',inplace=True)#df.set_index : Défini l'index DataFrame à l'aide des colonnes existantes.
     
+
     # Récupération des pistes et le calcul de leurs longueur
     for f in df.index : #index de 0 à 123 (nombre de wavfiles dans le fichier excel)
         rate, signal = wavfile.read(wavfiles_namedir +'/'+f)#Récupérer le wavfile
         df.at[f,'length'] = signal.shape[0]/rate#pour chaque wavfile , on calcule la longeur par la formule 
-
-
+    
+    
     #Récupération du labelle des pistes sans répition : Chorus , Nickel-Power , Phaser_,Reverb
     classes = list(np.unique(df.label)) #recupere les noms des classes existants sans répétition
 
@@ -197,7 +198,7 @@ def built_plot_signal(df,classes,wavfiles_namedir):
     fft = {}
     fbank = {}
     mfccs = {}
-
+    print(df)
     for c in classes: #loop sur les noms des classes : Chorus , Nickel-Power , Phaser_ , Reverb
         wav_file= df[df.label == c].iloc[0,0]#on verifie si le label sélectionné par la loop est le meme que dans DF alors on recupere la premiere de col = 0 et row = 0
         signal, rate = librosa.load(wavfiles_namedir+'/'+wav_file, sr = 44100 )#on charge le wavfile correspondant au filename
