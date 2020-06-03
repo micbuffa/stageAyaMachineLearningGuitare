@@ -50,7 +50,14 @@
     2.L'ajout de la fonction Plot_EMA pour le tracage de la moyenne mobille exponentielle
     3.L'ajout de Zooming & brushing dans les graphes 
 
-    
+ ## Modification de 03/06/2020 :
+    1.L'ajout du dossier templates ou il y a les pages HTML 
+    2.L'ajout de programme flask_prog.py pour tester flask : c'est un framework nous permet l'interaction d'un programme python avec les page HTML dans le dossier templates
+    **Pour tester le prgramme :
+        1.Exécutez le programme flask_prog.py dans un IDE.
+        2.Dans le navigateur , tapez http://127.0.0.1:5000/music,quelques secondes et vous pouvez lire le fichier audio dans clean_test.
+
+   
 
 
     
