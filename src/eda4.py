@@ -21,16 +21,17 @@ def Init (csv_namefile,wavfiles_namedir):
            
     Returns:
         
-        renvoie 2 variables qui seront utilisées dans les autres fonctions       
+        renvoie 3 variables qui seront utilisées dans les autres fonctions       
         df : dataframe contient les données dans le fichier excel 
         classes : contient les noms des classes qui seront utilisés dans l'apprentissage 
-   
+        nb_classe : le nombre des classes utilisées dans l'entrainement
+
     """   
     # Récupération de fichier Excel ou il y a le file name avec label correspond
     df = pd.read_csv(csv_namefile)
     df.set_index('fname',inplace=True)#df.set_index : Défini l'index DataFrame à l'aide des colonnes existantes.
     
-
+    nb_classe = len(df) #le nombre des classes utilisées
     # Récupération des pistes et le calcul de leurs longueur
     for f in df.index : #index de 0 à 123 (nombre de wavfiles dans le fichier excel)
         rate, signal = wavfile.read(wavfiles_namedir +'/'+f)#Récupérer le wavfile
@@ -42,41 +43,49 @@ def Init (csv_namefile,wavfiles_namedir):
 
     
     
-    return df, classes  #ces 2 varibales sont utilisées dans les autres fonctions
+    return df, classes , nb_classe #ces 3 varibales sont utilisées dans les autres fonctions
 
 # Tracage des diffents fonctions : mfcc , fft, ..  (les fonctions sont prédéfinie)     
-def plot_signals(signals):
+def plot_signals(signals,nb_classe):
     """Tracage de Time series
     Args:
         signals : le signal à tracer 
+        nb_classe : le nombre des classes utilisées dans l'entrainement
            
     Returns:
         trace Time series de chaque piste
     """   
-    fig, axes = plt.subplots(nrows=2, ncols=2, sharex=False,
+    rows =(nb_classe//2) if (nb_classe%2==0) else (nb_classe//2 +1)
+    #le calcule du nombre des lignes nécessaires pour présenter les classes 
+    # en fonction du nombre des classes(2 figures par ligne)
+    fig, axes = plt.subplots(nrows=rows, ncols=2, sharex=False,
                              sharey=True, figsize=(20,10))
     fig.suptitle('Time Series', size=20)
     i = 0
-    for x in range(2):
+    for x in range(rows):
         for y in range(2):
             axes[x,y].set_title(list(signals.keys())[i])
             axes[x,y].plot(list(signals.values())[i])
             axes[x,y].get_xaxis().set_visible(False)
             axes[x,y].get_yaxis().set_visible(False)
             i += 1
-def plot_fft(fft):
+def plot_fft(fft,nb_classe):
     """Tracage de Fourier Transforms
     Args:
         fft : le signal généré par la fonction fft à tracer
-           
+        nb_classe : le nombre des classes utilisées dans l'entrainement
+
     Returns:
         trace Fourier Transforms de chaque piste
     """
-    fig, axes = plt.subplots(nrows=2, ncols=2, sharex=False,
+    rows =(nb_classe//2) if (nb_classe%2==0) else (nb_classe//2 +1)
+    #le calcule du nombre des lignes nécessaires pour présenter les classes 
+    # en fonction du nombre des classes(2 figures par ligne)
+    fig, axes = plt.subplots(nrows=rows, ncols=2, sharex=False,
                               sharey=True, figsize=(20,10))
     fig.suptitle('Fourier Transforms', size=16)
     i = 0
-    for x in range(2):
+    for x in range(rows):
         for y in range(2):
             data = list(fft.values())[i]
             Y, freq = data[0], data[1]
@@ -85,19 +94,23 @@ def plot_fft(fft):
             axes[x,y].get_xaxis().set_visible(False)
             axes[x,y].get_yaxis().set_visible(False)
             i += 1
-def plot_fbank(fbank):
+def plot_fbank(fbank,nb_classe):
     """Tracage Filter Bank Coefficients
     Args:
         fbank : le signal généré par la fonction fbank à tracer
-           
+        nb_classe : le nombre des classes utilisées dans l'entrainement
+    
     Returns:
         trace Filter Bank Coefficients de chaque piste
     """
-    fig, axes = plt.subplots(nrows=2, ncols=2, sharex=False,
+    rows =(nb_classe//2) if (nb_classe%2==0) else (nb_classe//2 +1)
+    #le calcule du nombre des lignes nécessaires pour présenter les classes 
+    # en fonction du nombre des classes(2 figures par ligne)
+    fig, axes = plt.subplots(nrows=rows, ncols=2, sharex=False,
                               sharey=True, figsize=(20,10))
     fig.suptitle('Filter Bank Coefficients', size=16)
     i = 0
-    for x in range(2):
+    for x in range(rows):
         for y in range(2):
             axes[x,y].set_title(list(fbank.keys())[i])
             axes[x,y].imshow(list(fbank.values())[i],
@@ -105,19 +118,23 @@ def plot_fbank(fbank):
             axes[x,y].get_xaxis().set_visible(False)
             axes[x,y].get_yaxis().set_visible(False)
             i += 1
-def plot_mfccs(mfccs):
+def plot_mfccs(mfccs,nb_classe):
     """Tracage FMel Frequency Cepstrum Coefficients
     Args:
         mfccs : le signal généré par la fonction mfccs à tracer
-           
+        nb_classe : le nombre des classes utilisées dans l'entrainement
+          
     Returns:
         trace Mel Frequency Cepstrum Coefficients de chaque piste
     """
-    fig, axes = plt.subplots(nrows=2, ncols=2, sharex=False,
+    rows =(nb_classe//2) if (nb_classe%2==0) else (nb_classe//2 +1)
+    #le calcule du nombre des lignes nécessaires pour présenter les classes 
+    # en fonction du nombre des classes(2 figures par ligne)    
+    fig, axes = plt.subplots(nrows=rows, ncols=2, sharex=False,
                               sharey=True, figsize=(20,5))
     fig.suptitle('Mel Frequency Cepstrum Coefficients', size=16)
     i = 0
-    for x in range(2):
+    for x in range(rows):
         for y in range(2):
             axes[x,y].set_title(list(mfccs.keys())[i])
             axes[x,y].imshow(list(mfccs.values())[i],
@@ -183,11 +200,12 @@ def pie_chart(df):
     plt.show()
     df.reset_index(inplace=True)
 
-def built_plot_signal(df,classes,wavfiles_namedir):
+def built_plot_signal(df,classes,wavfiles_namedir,nb_classe):
     """Fonction du calcule et du tracage des fonctions ; fft , mfccs, fbank ..
         df: Trame de données précédemment initialisée à l'aide de la fonction Init    
         classes : les noms des classes précédemment récupérées de DF dans la fonction Init
         wavfiles_namedir: le nom de dossier où il y les audiofiles 
+        nb_classe : le nombre des classes utilisées dans l'entrainement
 
     Returns:
         Trace fft , TS , MFCC, Fbank des classes.
@@ -198,7 +216,7 @@ def built_plot_signal(df,classes,wavfiles_namedir):
     fft = {}
     fbank = {}
     mfccs = {}
-    print(df)
+    
     for c in classes: #loop sur les noms des classes : Chorus , Nickel-Power , Phaser_ , Reverb
         wav_file= df[df.label == c].iloc[0,0]#on verifie si le label sélectionné par la loop est le meme que dans DF alors on recupere la premiere de col = 0 et row = 0
         signal, rate = librosa.load(wavfiles_namedir+'/'+wav_file, sr = 44100 )#on charge le wavfile correspondant au filename
@@ -217,16 +235,16 @@ def built_plot_signal(df,classes,wavfiles_namedir):
 
   
     # Tracage des fonctions
-    plot_signals(signals)
+    plot_signals(signals,nb_classe)
     plt.show()
 
-    plot_fft(fft)
+    plot_fft(fft,nb_classe)
     plt.show()
 
-    plot_fbank(fbank)
+    plot_fbank(fbank,nb_classe)
     plt.show()
 
-    plot_mfccs(mfccs)
+    plot_mfccs(mfccs,nb_classe)
     plt.show()
  
 def save_clean_wavfiles(df,clean_namedir, wavfiles_namedir):
@@ -244,11 +262,11 @@ def save_clean_wavfiles(df,clean_namedir, wavfiles_namedir):
             wavfile.write(filename=clean_namedir +'/'+f,rate=rate,data=signal[mask]) #sauvegarder le wavfile nettoyé dans le dossier Clean4
  
 # Initialiser les varibales    
-df,classes = Init(csv_namefile,wavfiles_namedir)
+df,classes ,nb_classe= Init(csv_namefile,wavfiles_namedir)
 # Taracage de pie chart
 pie_chart(df)
 # Tracage des fonctions fft mfccs ..
-built_plot_signal(df,classes,wavfiles_namedir)
+built_plot_signal(df,classes,wavfiles_namedir,nb_classe)
 # sauvegarde des wavfiles nettoyés
 save_clean_wavfiles(df,clean_namedir, wavfiles_namedir)
 
