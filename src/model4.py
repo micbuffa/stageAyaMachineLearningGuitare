@@ -39,12 +39,15 @@ def Init(csv_namefile,clean_namedir):
             Nickel-Power    0.250399
             Phaser_         0.249551
             Reverb          0.250399
+        nb_classe : le nombre des classes utilisées dans l'entrainement
+
         
     """   
     #Téléchargement du fichier Excel qui contient le nom de la piste avec label qui le correspond       
     df = pd.read_csv(csv_namefile)
     df.set_index('fname', inplace=True)#df.set_index : Défini fname dans DataFrame à l'aide des colonnes existantes.
     
+    nb_classe=len(df)#le nombre des classes de l'entrainement
     # Récuperer les échantions nettoyées et le calcul de la longeur de chaque piste
     for f in df.index:#indice de 0 à 123 (nombre de wavfiles dans le fichier excel)
         rate, signal = wavfile.read(clean_namedir+'/'+f) #recupére les wavfiles nettoyés
@@ -57,7 +60,7 @@ def Init(csv_namefile,clean_namedir):
     # Création des N sample , la probabilité de distribution et les choices en se basant sur prob_dist
     n_samples = 4 * int(df['length'].sum()/0.1) #le nombre des échantillons de 1/10s dans les wavfiles qui sont en fait possibles dans les signaux
     prob_dist = class_dist / class_dist.sum()#La probabilité associée à chaque entrée (classe)
-    return df, classes , class_dist , n_samples , prob_dist# Init initilise les varibeles qui seront utilisées dans les autres fonctions
+    return df, classes , class_dist , n_samples , prob_dist,nb_classe# Init initilise les varibeles qui seront utilisées dans les autres fonctions
         
 
 def check_config(config):
@@ -108,6 +111,7 @@ def build_rand_feat(csv_namefile,clean_namedir,config):
           
     Returns:
         renvoie les deux matrices X et Y
+        et le nombre des classes de l'entrainement
     """ 
     
     #Dans la classe de configuration on un champ "data" qui contient X et Y du 
@@ -122,7 +126,7 @@ def build_rand_feat(csv_namefile,clean_namedir,config):
         return samp[0], samp[1] #samp[0] : X et samp[1]: Y
     
     # Initialiser les varibales qui seront utilisés dans cette fonction seulement
-    df, classes , class_dist , n_samples , prob_dist = Init(csv_namefile,clean_namedir)
+    df, classes , class_dist , n_samples , prob_dist,nb_classe = Init(csv_namefile,clean_namedir)
     
     X=[]
     y=[]
@@ -161,7 +165,7 @@ def build_rand_feat(csv_namefile,clean_namedir,config):
     
     
     X = X.reshape(X.shape[0],X.shape[1],X.shape[2], 1) #remodeler X sans modifier ses données pour l'adapter au modèle convolutionnel
-    y = to_categorical(y,num_classes=4)#to_categorical : Convertit un vecteur de classe (entiers)(0-3) en matrice de classe binaire.
+    y = to_categorical(y,num_classes=nb_classe)#to_categorical : Convertit un vecteur de classe (entiers)(0-3) en matrice de classe binaire.
     
     config.data = (X , y)#sauenregistrer les x et y en tant qu'attribut data dans la classe de configuration pour une utilisation ultérieure
     with open(config.p_path , 'wb') as handle:
@@ -170,14 +174,16 @@ def build_rand_feat(csv_namefile,clean_namedir,config):
     with open(config.samples_path , 'wb') as handle:#sauvegarde de X et Y dans le dossier samples4 pour une utilisation ultérieure
         pickle.dump(config.data, handle, protocol=2)    
         
-    return X,y 
+    return X,y ,nb_classe
 
 
-def get_conv_model(input_shape): 
+def get_conv_model(input_shape,nb_classe): 
 
     """fonction pour la préparation de modele convolutionnel
     Args:
         input_shape : forme des données d'entrées de RN
+        nb_classe : le nombre des classes utilisées dans l'entrainement
+
           
     Returns:
         renvoie le modele
@@ -199,7 +205,7 @@ def get_conv_model(input_shape):
     model.add(Dropout(0.2))
     model.add(Dense(64,activation='relu'))
     model.add(Dropout(0.1))
-    model.add(Dense(4,activation='softmax'))
+    model.add(Dense(nb_classe,activation='softmax'))
     model.summary()
     
     model.compile(loss='categorical_crossentropy',optimizer='adam',metrics=['acc'])
@@ -211,7 +217,7 @@ def get_conv_model(input_shape):
     return model
 
 
-def Train(model_path,X , y ,csv_namefile,clean_namedir):
+def Train(model_path,X , y ,csv_namefile,clean_namedir,nb_classe):
     
     """fonction d'apprentissage : nous permet de former notre RN 
     Args:
@@ -219,6 +225,7 @@ def Train(model_path,X , y ,csv_namefile,clean_namedir):
         X , Y : les matrices d'apprentissage
         csv_namefile: le nom du fichier excel où il y a la liste des noms de fichiers audio avec le libellé de la classe qui leur correspond
         clean_namedir : le nom du dossier où nous enregistrons les pistes nettoyées
+        nb_classe : le nombre des classes utilisées dans l'entrainement
         
     Returns:
         Trace les courbes d'accuracy et loss de notre modele formé 
@@ -234,7 +241,7 @@ def Train(model_path,X , y ,csv_namefile,clean_namedir):
 
 
     input_shape = (X.shape[1],X.shape[2], 1 )#la forme des données d'entrées d"un CNN
-    model = get_conv_model(input_shape) #récupéré le modele conv
+    model = get_conv_model(input_shape,nb_classe) #récupéré le modele conv
     class_weight = compute_class_weight('balanced',np.unique(y_flat),y_flat)
     #copute_class_weight : Estimer les poids de classe pour les ensembles de données 
     #np.unique(y_flat) : pour récupérer les indices des classes dans y_flat sans répétition [0,1,2,3] 
@@ -276,9 +283,9 @@ def Train(model_path,X , y ,csv_namefile,clean_namedir):
 
 
 # La phase d'apprentissage 
-X , y = build_rand_feat(csv_namefile,clean_namedir,config) #récupérer les Matrices X et Y préparés par la fonction build_rand_feat
+X , y , nb_classe= build_rand_feat(csv_namefile,clean_namedir,config) #récupérer les Matrices X et Y préparés par la fonction build_rand_feat
 #appeler la fonction de formation du modèle
-Train(config.model_path,X,y,csv_namefile,clean_namedir)
+Train(config.model_path,X,y,csv_namefile,clean_namedir,nb_classe)
 
 
 
