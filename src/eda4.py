@@ -31,7 +31,6 @@ def Init (csv_namefile,wavfiles_namedir):
     df = pd.read_csv(csv_namefile)
     df.set_index('fname',inplace=True)#df.set_index : Défini l'index DataFrame à l'aide des colonnes existantes.
     
-    nb_classe = len(df) #le nombre des classes utilisées
     # Récupération des pistes et le calcul de leurs longueur
     for f in df.index : #index de 0 à 123 (nombre de wavfiles dans le fichier excel)
         rate, signal = wavfile.read(wavfiles_namedir +'/'+f)#Récupérer le wavfile
@@ -39,7 +38,8 @@ def Init (csv_namefile,wavfiles_namedir):
     
     
     #Récupération du labelle des pistes sans répition : Chorus , Nickel-Power , Phaser_,Reverb
-    classes = list(np.unique(df.label)) #recupere les noms des classes existants sans répétition
+    classes = list(df.label) #recupere les noms des classes existants sans répétition
+    nb_classe = len(classes) #le nombre des classes utilisées
 
     
     
