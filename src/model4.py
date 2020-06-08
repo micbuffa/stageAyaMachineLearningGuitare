@@ -47,16 +47,16 @@ def Init(csv_namefile,clean_namedir):
     df = pd.read_csv(csv_namefile)
     df.set_index('fname', inplace=True)#df.set_index : Défini fname dans DataFrame à l'aide des colonnes existantes.
     
-    nb_classe=len(df)#le nombre des classes de l'entrainement
     # Récuperer les échantions nettoyées et le calcul de la longeur de chaque piste
     for f in df.index:#indice de 0 à 123 (nombre de wavfiles dans le fichier excel)
         rate, signal = wavfile.read(clean_namedir+'/'+f) #recupére les wavfiles nettoyés
         df.at[f, 'length'] = signal.shape[0]/rate #pour chaque wavfile nettoyé , on calcule la longeur par la formule 
 
     # Récupérer les labelles des classes : Chorus , Nickel-Power , Reverb - Phaser_ 
-    classes = list(np.unique(df.label))#recupere les noms des classes existants sans répétition
+    classes = list(df.label)#recupere les noms des classes existants sans répétition
     class_dist = df.groupby(['label'])['length'].mean()#calcule da la longueur moyenne de les pistes regroupées par nom de classe
-    
+    nb_classe=len(classes)#le nombre des classes de l'entrainement
+
     # Création des N sample , la probabilité de distribution et les choices en se basant sur prob_dist
     n_samples = 4 * int(df['length'].sum()/0.1) #le nombre des échantillons de 1/10s dans les wavfiles qui sont en fait possibles dans les signaux
     prob_dist = class_dist / class_dist.sum()#La probabilité associée à chaque entrée (classe)
