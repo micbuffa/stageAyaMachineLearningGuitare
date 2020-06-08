@@ -53,6 +53,10 @@
     **Pour tester le prgramme :
         1.Exécutez le programme flask_prog.py dans un IDE.
         2.Dans le navigateur , tapez http://127.0.0.1:5000/music,quelques secondes et vous pouvez lire le fichier audio dans clean_test.  
+        
+ ## Modification de 07/06/2020 :
+    1.Le nombre des classes est paramétré
+    2.changement du programme predict_test.py :le programme s'adapte au nombre de classes
 
    
 
