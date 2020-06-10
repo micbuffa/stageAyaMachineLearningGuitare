@@ -60,6 +60,7 @@
  ## Modification de 07/06/2020 :
     1.Le nombre des classes est paramétré
     2.changement du programme predict_test.py :le programme s'adapte au nombre de classes
+    3.Changement de la facon du nettoyage 
 
 
    
