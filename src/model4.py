@@ -159,6 +159,7 @@ def build_rand_feat(csv_namefile,wavfiles_namedir,config):
     X=[]
     y=[]
     
+    
     _min,_max = float('inf'), -float('inf') #pour comprendre la mise à l'échelle pour normaliser les valeurs de loss et acc
     for _ in tqdm(range(n_samples)):#boucle sur les n échantillons qu'on a calculé déjà 
     
@@ -180,9 +181,9 @@ def build_rand_feat(csv_namefile,wavfiles_namedir,config):
             X_sample = mfcc(sample,rate,numcep=config.nfeat,nfilt=config.nfilt,
                        nfft = config.nfft,
                        winlen=0.032,winstep=0.015)#préparation de l'échantillon en utilisant la formule mfccs
-        else:#sinon
-            X_sample = sample 
-       
+        else:#Sinon on sauvegarde la valeur sans passer par mfcc
+            X_sample = sample
+            
         # MWI norm
         smin = np.amin(X_sample)
         smax = np.amax(X_sample)
@@ -299,7 +300,7 @@ def Train(model_path,X , y ,csv_namefile,clean_namedir,nb_classe):
     # et de l’erreur de classification ‘accuracy’
 
     print(history.history.keys())
-
+    plt.figure(1)
     # summarize history for accuracy
     plt.plot(history.history['acc'])
     plt.plot(history.history['val_acc'])
@@ -309,6 +310,7 @@ def Train(model_path,X , y ,csv_namefile,clean_namedir,nb_classe):
     plt.legend(['train', 'test'], loc='upper left')
     plt.show()
     # summarize history for loss
+    plt.figure(2)
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
     plt.title('model loss')
