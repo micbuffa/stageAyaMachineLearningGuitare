@@ -160,6 +160,7 @@ def build_rand_feat(csv_namefile,wavfiles_namedir,config):
     y=[]
     
     
+    
     _min,_max = float('inf'), -float('inf') #pour comprendre la mise à l'échelle pour normaliser les valeurs de loss et acc
     for _ in tqdm(range(n_samples)):#boucle sur les n échantillons qu'on a calculé déjà 
     
@@ -178,22 +179,19 @@ def build_rand_feat(csv_namefile,wavfiles_namedir,config):
         
         if mask.count(True) == len(mask) : #si True donc l'échantillon est supérieur au seuil
         
-            X_sample = mfcc(sample,rate,numcep=config.nfeat,nfilt=config.nfilt,
+            X_sample = mfcc(sample,16000,numcep=config.nfeat,nfilt=config.nfilt,
                        nfft = config.nfft,
                        winlen=0.032,winstep=0.015)#préparation de l'échantillon en utilisant la formule mfccs
-        else:#Sinon on sauvegarde la valeur sans passer par mfcc
-            X_sample = sample
+            # MWI norm
+            smin = np.amin(X_sample)
+            smax = np.amax(X_sample)
+            X_sample = (X_sample - np.mean(X_sample)) / (np.std(X_sample)+1e-8)
             
-        # MWI norm
-        smin = np.amin(X_sample)
-        smax = np.amax(X_sample)
-        X_sample = (X_sample - np.mean(X_sample)) / (np.std(X_sample)+1e-8)
-        
-        
-        _min=min(np.amin(X_sample), _min)#la valeur minimal de loss obtenue a chaque entrainement
-        _max=max(np.amax(X_sample), _max)#la valeur maximal d'accuracy obtenue a chaque entrainement
-        X.append(X_sample) #la matrice X contient les échantillons préparées
-        y.append(classes.index(label))#la matrice Y contient les indices des labels récupérés au début de la loop
+            
+            _min=min(np.amin(X_sample), _min)#la valeur minimal de loss obtenue a chaque entrainement
+            _max=max(np.amax(X_sample), _max)#la valeur maximal d'accuracy obtenue a chaque entrainement
+            X.append(X_sample) #la matrice X contient les échantillons préparées
+            y.append(classes.index(label))#la matrice Y contient les indices des labels récupérés au début de la loop
         
     config.min = _min #sauvegarde de la valeur minimal de loss comme attribut de la classe config
     config.max = _max #sauvegarde de la valeur maximal d'accuracy comme attribut de la classe config
