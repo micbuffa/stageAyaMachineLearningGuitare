@@ -106,27 +106,24 @@ def build_predictions(wavfiles_namedir,config,classes,model):
             mask = Cleaning(s,rate,0.02) #Le calcule du l'enveloppe
         
             if mask.count(True) == len(mask):#si True donc l'échantillon est supérieur au seuil
-                x = mfcc(sample,rate,numcep=config.nfeat,nfilt=config.nfilt,
+                x = mfcc(sample,16000,numcep=config.nfeat,nfilt=config.nfilt,
                        nfft = config.nfft,
                        winlen=0.032,winstep=0.015)#préparation de l'échantillon en utilisant la formule mfccs
-              
-            else:#Sinon
-                x= sample
-                            
-            #x =( x - config.min) / (config.max - config.min) #normaliser le X avec les valeurs min et max qui sont déjà calculées a la phase de l'apprentissage 
-            smin = np.amin(x)
-            smax = np.amax(x)
-            x = (x - np.mean(x)) / (np.std(x)+1e-8)
             
-            # x =( x - config.min) / (config.max - config.min) #normaliser le X avec les valeurs min et max qui sont déjà calculées a la phase de l'apprentissage
-            x = x.reshape(1,x.shape[0],x.shape[1], 1)#remodeler X sans modifier ses données pour l'adapter au modèle convolutionnel
-            y_hat = model.predict(x)#la probabilité que X soit chaque classe, sa forme : [0.8954995 , 0,0256264, 0,1684461,0.2556898] ,chaque valeur correspond a une classe
-           
-            y_prob.append(y_hat)#rassembler les probabilités du même wavfile (chaque prob correspond au 1/10s de wavfiles encours)
-            y_pred.append(np.argmax(y_hat))#y_pred : contient les indices des classes prédites ou la probabilité etait la plus élévé
-   
-            y_true.append(c)#y_true : contient l'indice de la bonne classe à prévoir pour chaque fichier wav
-            
+                #x =( x - config.min) / (config.max - config.min) #normaliser le X avec les valeurs min et max qui sont déjà calculées a la phase de l'apprentissage 
+                smin = np.amin(x)
+                smax = np.amax(x)
+                x = (x - np.mean(x)) / (np.std(x)+1e-8)
+                
+                # x =( x - config.min) / (config.max - config.min) #normaliser le X avec les valeurs min et max qui sont déjà calculées a la phase de l'apprentissage
+                x = x.reshape(1,x.shape[0],x.shape[1], 1)#remodeler X sans modifier ses données pour l'adapter au modèle convolutionnel
+                y_hat = model.predict(x)#la probabilité que X soit chaque classe, sa forme : [0.8954995 , 0,0256264, 0,1684461,0.2556898] ,chaque valeur correspond a une classe
+               
+                y_prob.append(y_hat)#rassembler les probabilités du même wavfile (chaque prob correspond au 1/10s de wavfiles encours)
+                y_pred.append(np.argmax(y_hat))#y_pred : contient les indices des classes prédites ou la probabilité etait la plus élévé
+       
+                y_true.append(c)#y_true : contient l'indice de la bonne classe à prévoir pour chaque fichier wav
+                
             
         fn_prob[fn] = np.mean(y_prob , axis = 0).flatten()
         #chaque fichier wav  nous l'avons coupé en échantillons de 1 / 10s, chaque échantillon nous avons calculé la probabilité d'être l'une des classes
