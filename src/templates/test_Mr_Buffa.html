@@ -1,0 +1,296 @@
+
+<!DOCTYPE html>
+<html lang='en'>
+
+<head>
+
+  <meta charset='UTF-8'>
+  
+<link rel='apple-touch-icon' type='image/png' href='https://static.codepen.io/assets/favicon/apple-touch-icon-5ae1a0698dcc2402e9712f7d01ed509a57814f994c660df9f7a952f3060705ee.png' />
+<meta name='apple-mobile-web-app-title' content='CodePen'>
+
+<link rel='shortcut icon' type='image/x-icon' href='https://static.codepen.io/assets/favicon/favicon-aec34940fbc1a6e787974dcd360f2c6b63348d4b1f4e06c77743096d55480f33.ico' />
+
+<link rel='mask-icon' type='' href='https://static.codepen.io/assets/favicon/logo-pin-8f3771b1072e3c38bd662872f6b673a722f4b3ca2421637d5596661b4e2132cc.svg' color='#111' />
+
+
+  <title>Machine Learning Music Player  </title>
+  
+  <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css'>
+
+  
+  
+<style>
+/* Global Reset */
+* {
+    font-family: 'Allerta', arial, Tahoma;
+    box-sizing: border-box;
+}
+body {
+    background: -webkit-gradient(linear, right top, left top, from(#7700aa), to(#8800ff));
+    background: linear-gradient(to left, #7700aa, #8800ff);
+    text-align:center;
+    color:#fff;
+}
+h3{
+    text-shadow:1px 1px 1px #fff;
+}
+/* Start  styling the page */
+.container-audio {
+    width: 66%;
+    height: auto;
+    padding: 20px;
+    border-radius: 5px;
+    background-color: #eee;
+    color: #444;
+    margin: 20px auto;
+    overflow: hidden;
+}
+audio {
+  width:100%;
+}
+audio:nth-child(2), audio:nth-child(4), audio:nth-child(6) {
+    margin: 0;
+}
+
+</style>
+
+  <script>
+  window.console = window.console || function(t) {};
+
+  if (document.location.search.match(/type=embed/gi)) {
+    window.parent.postMessage('resize', '*');
+  }
+</script>
+
+</head>
+
+<body translate='no' >
+  <!-- Called of font style  file -->
+<div class ="col-md-6 offset-md-3">
+    <link href='https://fonts.googleapis.com/css?family=Allerta' rel='stylesheet'>
+
+
+    <h2>Machine Learning Music Player {{title}} </h2>
+    <div id="audio"></div>
+    <div class='container-audio'>
+             <audio id ="music" controls  >
+              <source src= "https://github.com/micbuffa/stageAyaMachineLearningGuitare/blob/master/src/Test/wavfiles_test/LaGrange-Guitars?raw=true" type="audio/wav"/>
+             </audio>
+    </div>
+    <div class="card"style="background-color: white; height :60% ; width:60%;margin: auto">
+        <div class="card-body">
+          <canvas id="chart_probabilite" width="1000" height="300"></canvas>
+        </div>
+        
+    </div>  
+   
+    <br/><br/>
+    <br/><br/>
+
+</div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@0.7.7"></script>
+<script>
+const music = document.getElementById('music');
+
+var temps=[];
+  var  t=0;
+  var c = {};
+
+music.addEventListener('timeupdate', function() {
+  
+  var CT = getTime();
+  CT.then((value) => {
+  
+  if(t < value){
+    ChartIt(value); 
+
+
+  }
+  });
+ 
+});
+
+async function ChartIt(CT){
+  
+  const data_prob =await getData_probabilite();
+
+  const ctx_prob = document.getElementById('chart_probabilite').getContext('2d');
+
+  var dataset =[];
+  var probabilite =[];
+  var _data={};
+
+  var  i,j ;
+  var label_classe;
+  //console.log(Object.keys(data_prob.prob).length);
+  if(!temps.includes(CT)){
+    if(data_prob.prob.hasOwnProperty(CT)){
+
+      for (j=1 ;j<data_prob.classe.length ;j++)  {
+        label_classe =data_prob.classe[j];
+        (c[j] || (c[j] = [])).push(data_prob.prob[CT][j-1]);
+        var randomColor = '#'+Math.floor(Math.random()*16777215).toString(16);
+        var dataset_classe = {
+                  label:label_classe,
+                  data: Array.from(new Set(c[j])),
+                  fill : false ,
+                  borderColor:  randomColor ,
+                  borderWidth: 2,
+                  pointHoverBackgroundColor : 'black'
+
+              };
+        
+        //console.log(label_classe,Array.from(new Set(c[j])));
+    
+        dataset.push(dataset_classe);
+
+      
+
+      } 
+      
+      temps.push(CT);
+      
+
+    
+    //console.log(dataset)
+    
+      _data = {
+        labels: Array.from(new Set(temps)),
+        datasets: dataset
+      };
+      console.log(_data);
+
+    /*setTimeout(() => {
+      
+      }, 2000);**/
+    const myChart = new Chart(ctx_prob, {
+          type: 'line',
+          data: _data,
+          options: {
+              scales: {
+                  yAxes: [{
+                      ticks: {
+                          beginAtZero: true
+                      }
+                  }]
+              },
+              plugins: {
+                    zoom: {
+                      pan: {
+                        enabled: true,
+                        mode: 'xy',
+                        rangeMin: {
+                          x: null,
+                          y: null
+                        },
+                        rangeMax: {
+                          x: null,
+                          y: null
+                        },
+                        speed: 20,
+                        threshold: 10,
+                        onPan: function({chart}) { console.log(`I'm panning!!!`); },
+                        onPanComplete: function({chart}) { console.log(`I was panned!!!`); }
+                      },
+                      zoom: {
+                        enabled: true,
+                        drag: true,
+                        mode: 'xy',
+                        rangeMin: {
+                          x: null,
+                          y: null
+                        },
+                        rangeMax: {
+                          x: null,
+                          y: null
+                        },
+                        speed: 0.1,
+                        threshold: 2,
+                        sensitivity: 3,
+                        onZoom: function({chart}) { console.log(`I'm zooming!!!`); },
+                        onZoomComplete: function({chart}) { console.log(`I was zoomed!!!`); }
+                      }
+                    }
+                  },
+                  scales: {
+                        yAxes: [{
+                          scaleLabel: {
+                            display: true,
+                            labelString: 'probabilité'
+                          }
+                      }],
+                      xAxes: [{
+                          scaleLabel: {
+                            display: true,
+                            labelString: 'Temps(ms)'
+                          }
+                      }]
+          }
+
+          }
+      });
+
+  }
+    }
+}
+
+
+
+//Fonctions de récupération des données
+  async function getData_probabilite(){
+    const xlables = [];
+    const y_classe=[];
+    var cl = [];
+    var prob ={};
+
+
+	  const response = await fetch('https://raw.githubusercontent.com/micbuffa/stageAyaMachineLearningGuitare/master/src/Probabilite_classe_predictions.csv');
+    var data = await response.text();
+    data = data.trim();
+    var table = data.split('\n');
+    const classe =table[0].split(',');
+    const nb_classes = classe.length;
+    //console.log(classe[0]);
+    table = data.split('\n').slice(1);
+    table.forEach(row => {
+        const col = row.split(',');
+        const temps = col[0];
+        xlables.push(temps);
+
+        var i ;
+        cl =[];
+        for (i = 1; i < nb_classes; i++) {
+          
+          cl.push(col[i]);
+
+        }
+        y_classe.push(cl);
+        prob[temps] =cl;
+
+    });
+    //console.log(y_classe,classe);
+    
+    return {xlables,y_classe,classe,prob}
+  }
+
+  async function getTime(){
+    
+   
+    var CT =(Math.floor(music.currentTime)/10)*1000;
+
+    
+    return CT;
+    
+
+  }
+
+
+</script>
+</body>
+
+</html>
+ 
