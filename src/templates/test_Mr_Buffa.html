@@ -71,11 +71,11 @@ audio:nth-child(2), audio:nth-child(4), audio:nth-child(6) {
     <link href='https://fonts.googleapis.com/css?family=Allerta' rel='stylesheet'>
 
 
-    <h2>Machine Learning Music Player {{title}} </h2>
+    <h2>Machine Learning Music Player LaGrange-Guitars </h2>
     <div id="audio"></div>
     <div class='container-audio'>
              <audio id ="music" controls  >
-              <source src= "https://github.com/micbuffa/stageAyaMachineLearningGuitare/blob/master/src/Test/wavfiles_test/LaGrange-Guitars?raw=true" type="audio/wav"/>
+              <source src= "https://github.com/micbuffa/stageAyaMachineLearningGuitare/blob/master/src/Test/wavfiles_test/LaGrange-Guitars.wav?raw=true" type="audio/wav"/>
              </audio>
     </div>
     <div class="card"style="background-color: white; height :60% ; width:60%;margin: auto">
@@ -87,7 +87,14 @@ audio:nth-child(2), audio:nth-child(4), audio:nth-child(6) {
    
     <br/><br/>
     <br/><br/>
-
+    <div class="card"style="background-color: white; height :60% ; width:60%;margin: auto">
+      <div class="card-body">
+        <canvas id="chart_classe" width="1000" height="300"></canvas>
+      </div>
+      
+  </div> 
+  <br/><br/>
+  <br/><br/> 
 </div>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3"></script>
@@ -97,28 +104,31 @@ audio:nth-child(2), audio:nth-child(4), audio:nth-child(6) {
 const music = document.getElementById('music');
 
 var temps=[];
-  var  t=0;
-  var c = {};
+var  t=0;
+var c = {};
+var __data =[];
 
 music.addEventListener('timeupdate', function() {
+  const CT = getTime();
+  while(t<CT){
+    ChartIt(t); 
+    t +=100;
+  };
   
-  var CT = getTime();
-  CT.then((value) => {
-  
-  if(t < value){
-    ChartIt(value); 
-
-
-  }
-  });
+  t=CT;
+  console.log(t);
  
 });
 
 async function ChartIt(CT){
   
   const data_prob =await getData_probabilite();
+  const data_classe =await getData_classe();
+
 
   const ctx_prob = document.getElementById('chart_probabilite').getContext('2d');
+  const ctx_classe = document.getElementById('chart_classe').getContext('2d');
+
 
   var dataset =[];
   var probabilite =[];
@@ -126,6 +136,7 @@ async function ChartIt(CT){
 
   var  i,j ;
   var label_classe;
+  //console.log(CT);
   //console.log(Object.keys(data_prob.prob).length);
   if(!temps.includes(CT)){
     if(data_prob.prob.hasOwnProperty(CT)){
@@ -136,7 +147,7 @@ async function ChartIt(CT){
         var randomColor = '#'+Math.floor(Math.random()*16777215).toString(16);
         var dataset_classe = {
                   label:label_classe,
-                  data: Array.from(new Set(c[j])),
+                  data: c[j],
                   fill : false ,
                   borderColor:  randomColor ,
                   borderWidth: 2,
@@ -147,9 +158,6 @@ async function ChartIt(CT){
         //console.log(label_classe,Array.from(new Set(c[j])));
     
         dataset.push(dataset_classe);
-
-      
-
       } 
       
       temps.push(CT);
@@ -162,7 +170,7 @@ async function ChartIt(CT){
         labels: Array.from(new Set(temps)),
         datasets: dataset
       };
-      console.log(_data);
+      //console.log(_data);
 
     /*setTimeout(() => {
       
@@ -177,7 +185,7 @@ async function ChartIt(CT){
                           beginAtZero: true
                       }
                   }]
-              },
+              }/* ,
               plugins: {
                     zoom: {
                       pan: {
@@ -215,7 +223,7 @@ async function ChartIt(CT){
                         onZoomComplete: function({chart}) { console.log(`I was zoomed!!!`); }
                       }
                     }
-                  },
+                  } */,
                   scales: {
                         yAxes: [{
                           scaleLabel: {
@@ -234,11 +242,71 @@ async function ChartIt(CT){
           }
       });
 
+ 
+
+  var ylabels ={};
+  for (i = 1; i < data_prob.classe.length; i++) {  
+    ylabels[i] = data_prob.classe[i];
   }
+  
+
+  for (j=1 ;j<data_prob.classe.length ;j++)  {
+         if(data_prob.classe[j]== data_classe.pred[CT]){
+             __data.push(j);
+      }
+           
     }
+  
+    
+  const myChart_1= new Chart(ctx_classe, {
+        type: 'line',
+        data: {
+              labels: Array.from(new Set(temps)),
+              datasets:[{
+                label:'La classe prévue pour chaque unité de temps',
+                data:__data ,
+                fill : false ,
+                borderColor:  'rgb(0, 99, 132)',
+                borderWidth: 1,
+                pointHoverBackgroundColor : 'black'
+
+        }]
+        },
+        options: {
+            scales: {
+                yAxes: [{
+                  scaleLabel: {
+                           display: true,
+                           labelString: 'Classes'
+                  },
+                  ticks: {
+                    max: data_prob.classe.length-1,
+                    min: 1,
+                    stepSize:1,
+                    callback: function(value, index, values) {
+                    return ylabels[value] + " -" +value +"-"  ;
+                }
+                  }
+
+                    
+                }],
+                xAxes: [{
+
+                      scaleLabel: {
+                       display: true,
+                        labelString: 'Temps(ms)'
+
+                      }
+                 }]
+            }
+             
+        }
+    });
+
 }
 
-
+}
+} 
 
 //Fonctions de récupération des données
   async function getData_probabilite(){
@@ -277,10 +345,10 @@ async function ChartIt(CT){
     return {xlables,y_classe,classe,prob}
   }
 
-  async function getTime(){
+  function getTime(){
     
    
-    var CT =(Math.floor(music.currentTime)/10)*1000;
+    var CT =Math.floor(music.currentTime)*1000;
 
     
     return CT;
@@ -288,6 +356,29 @@ async function ChartIt(CT){
 
   }
 
+  async function getData_classe(){
+    const xlables = [];
+    const y_pred=[];
+    const pred ={};
+
+	  const response = await fetch('https://raw.githubusercontent.com/micbuffa/stageAyaMachineLearningGuitare/master/src/Classes_predictions.csv');
+    var data = await response.text();
+    data = data.trim();
+    const table = data.split('\n').slice(1);
+ 
+    table.forEach(row => {
+        const col = row.split(',');
+        const temps = col[0];
+        const classe = col[1];
+        xlables.push(temps);
+        y_pred.push(classe);
+        pred[temps]= classe;
+
+    });
+    //console.log(xlables,y_pred);
+    
+    return {pred}
+  }
 
 </script>
 </body>
