@@ -13,19 +13,15 @@ import pickle
 from keras.callbacks import ModelCheckpoint
 from cfg4 import config
 import matplotlib.pyplot as plt
-
-#Initialiser les vaiables utilisées dans les fonctions
-csv_namefile = 'effets_guitare.csv' #le fichier excel 
-# clean_namedir = 'clean4' #Le dossier des wavfile nettoyés
-wavfiles_namedir = 'wavfiles4' #le dossier des wavfiles avant nettoyage
+import sklearn.datasets
+wavfiles_namedir = 'Samples-AYA' #le dossier des wavfiles avant nettoyage
 
 config = config()#instance la classe de configuration 
 
-
-def Init(csv_namefile,wavfiles_namedir):
+def Init(wavfiles_namedir):
+       
     """Initialise les variables du programme
     Args:
-        csv_namefile: le nom du fichier excel où il y a la liste des noms de fichiers audio avec le libellé de la classe qui leur correspond
         wavefiles_namedir: le nom de dossier où il y les audiofiles
            
     Returns:
@@ -39,53 +35,45 @@ def Init(csv_namefile,wavfiles_namedir):
         exemple : 
             Chorus          0.249651
             Nickel-Power    0.250399
-            Phaser_         0.249551
-            Reverb          0.250399
         nb_classe : le nombre des classes utilisées dans l'entrainement
-
         
     """   
-    #Téléchargement du fichier Excel qui contient le nom de la piste avec label qui le correspond       
-    df = pd.read_csv(csv_namefile)
-    df.set_index('fname', inplace=True)#df.set_index : Défini fname dans DataFrame à l'aide des colonnes existantes.
     
-    
-    # Récuperer les échantions nettoyées et le calcul de la longeur de chaque piste
-    for f in df.index:#indice de 0 à 123 (nombre de wavfiles dans le fichier excel)
-        rate, signal = wavfile.read(wavfiles_namedir+'/'+f) #recupére les wavfiles nettoyés
-        df.at[f, 'length'] = signal.shape[0]/rate #pour chaque wavfile nettoyé , on calcule la longeur par la formule 
+    dir_ = os.listdir(os.path.join(wavfiles_namedir))#Recupérer les fichiers audios
+    #Ces variables sont utilisées pour créer dataframe
+    fname =[]#le nom du fichier wav
+    length_wav =[]#la longueur 
+    label =[]#le libellé du fichier wav
+    data ={}#les données de dataframe
 
-    # Récupérer les labelles des classes : Chorus , Nickel-Power , Reverb - Phaser_ 
+    # Récuperer des informations sur chaque fichier wav
+    for f in dir_:#f : filename
+        rate, signal = wavfile.read(wavfiles_namedir+'/'+f) #recupére les wavfiles nettoyés
+        
+        (file, ext) = os.path.splitext(f)#récupérer le libellé du fichier wav
+        fname.append(f)
+        label.append(file)
+        length_wav.append(signal.shape[0]/rate)
+        
+        
+    #la construction de dataframe    
+    data['label']=label
+    data['fname']=fname
+    data['length']=length_wav
+       
+    df = pd.DataFrame(data)
+
     classes = list(df.label)#recupere les noms des classes existants sans répétition
     class_dist = df.groupby(['label'])['length'].mean()#calcule da la longueur moyenne de les pistes regroupées par nom de classe
     
-    nb_classe=len(classes)#le nombre des classes de l'entrainement
+    nb_classe=len(classes)#le nombre des classes de l'entrainement   
+        
 
     # Création des N sample , la probabilité de distribution et les choices en se basant sur prob_dist
-    n_samples = 4 * int(df['length'].sum()/0.1) #le nombre des échantillons de 1/10s dans les wavfiles qui sont en fait possibles dans les signaux
+    n_samples =int(df['length'].sum()/0.1) #le nombre des échantillons de 1/10s dans les wavfiles qui sont en fait possibles dans les signaux
     prob_dist = class_dist / class_dist.sum()#La probabilité associée à chaque entrée (classe)
     return df, classes , class_dist , n_samples , prob_dist,nb_classe# Init initilise les varibeles qui seront utilisées dans les autres fonctions
         
-
-def check_config(config):
-    """fonction de vérification : Verifier si il existe déja une configuration pour le modele pour éviter la répétition du travail 
-    Args:
-        config : une instance de la classes configuration 
-          
-    Returns:
-                renvoie une configuration existante pour le modèle ,qui est enregistrée dans le dossier 'pickles4'
-        sinon rien 
-        
-    """   
-    if os.path.isfile(config.p_path) :#verifier si le dossier pickles4(contient la configuration) est vide ou non
-        print('Loading existing data {} for model'.format(config.mode))
-        with open(config.p_path,'rb') as handle:
-            tmp = pickle.load(handle)#tmp contient le fichier conv.p où on sauvegarde la configuration
-            
-            return tmp
-    else:
-        return None
-
 
 def check_samples(config):
     """fonction de vérification :Verifier si il existe déjà des échantillons préparées pour éviter la répétition du travail 
@@ -129,11 +117,10 @@ def Cleaning(y, rate, threshold):
     return mask 
 
 
-def build_rand_feat(csv_namefile,wavfiles_namedir,config):
+def build_rand_feat(wavfiles_namedir,config):
     
     """fonction pour la préparation des échantillons  
     Args:
-        csv_namefile: le nom du fichier excel où il y a la liste des noms de fichiers audio avec le libellé de la classe qui leur correspond
         wavfiles_namedir : le nom de dossier où il y les audiofiles
         config : une instance de la classes configuration 
           
@@ -154,7 +141,7 @@ def build_rand_feat(csv_namefile,wavfiles_namedir,config):
         return samp[0], samp[1],samp[2] #samp[0] : X , samp[1]: Y, samp[2] : nombre de classes
     
     # Initialiser les varibales qui seront utilisés dans cette fonction seulement
-    df, classes , class_dist , n_samples , prob_dist,nb_classe = Init(csv_namefile,wavfiles_namedir)
+    df, classes , class_dist , n_samples , prob_dist,nb_classe = Init(wavfiles_namedir)
     
     X=[]
     y=[]
@@ -164,10 +151,11 @@ def build_rand_feat(csv_namefile,wavfiles_namedir,config):
     _min,_max = float('inf'), -float('inf') #pour comprendre la mise à l'échelle pour normaliser les valeurs de loss et acc
     for _ in tqdm(range(n_samples)):#boucle sur les n échantillons qu'on a calculé déjà 
     
-        rand_class= np.random.choice(class_dist.index,p=prob_dist)#le choix de la classe est aléatoire chaque itération
-        file = np.random.choice(df[df.label==rand_class].index)#recupération de le filename correspondant à la rand_class que nous avons généré
+        label_class= np.random.choice(class_dist.index,p=prob_dist)#le choix de la classe est aléatoire chaque itération
+
+        file = np.random.choice(df[df.label==label_class].fname)#recupération de le filename correspondant à la label_class que nous avons généré
         rate , wav= wavfile.read(wavfiles_namedir+'/'+file)#récupération de wavfile qui correspond au file
-        label = df.at[file,'label']#récupération le label de la classe qui correspand au file récupéré
+
         rand_index=np.random.randint(0,wav.shape[0]-config.step )#Prendre une valeur du signal basée sur la longueur du audio file, échantillonner directement à cet index et prendre 1/10 s
         sample = wav[rand_index:rand_index+config.step]#l'échantillon est tiré du fichier wav, le début de l'échantillon est rand_index, la longeur de l'échantillon est step = 1/10s 
         #afin que le modèle puisse discerner très rapidement une classification différente 
@@ -190,9 +178,9 @@ def build_rand_feat(csv_namefile,wavfiles_namedir,config):
             
             _min=min(np.amin(X_sample), _min)#la valeur minimal de loss obtenue a chaque entrainement
             _max=max(np.amax(X_sample), _max)#la valeur maximal d'accuracy obtenue a chaque entrainement
+
             X.append(X_sample) #la matrice X contient les échantillons préparées
-            y.append(classes.index(label))#la matrice Y contient les indices des labels récupérés au début de la loop
-        
+            y.append(classes.index(label_class))#la matrice Y contient les indices des labels récupérés au début de la loop
     config.min = _min #sauvegarde de la valeur minimal de loss comme attribut de la classe config
     config.max = _max #sauvegarde de la valeur maximal d'accuracy comme attribut de la classe config
     
@@ -253,14 +241,12 @@ def get_conv_model(input_shape,nb_classe):
     return model
 
 
-def Train(model_path,X , y ,csv_namefile,clean_namedir,nb_classe):
+def Train(model_path,X , y,nb_classe):
     
     """fonction d'apprentissage : nous permet de former notre RN 
     Args:
         model_path :le chemin du dossier 'models4' où nous enregistrerons notre modèle formé
         X , Y : les matrices d'apprentissage
-        csv_namefile: le nom du fichier excel où il y a la liste des noms de fichiers audio avec le libellé de la classe qui leur correspond
-        clean_namedir : le nom du dossier où nous enregistrons les pistes nettoyées
         nb_classe : le nombre des classes utilisées dans l'entrainement
         
     Returns:
@@ -320,9 +306,9 @@ def Train(model_path,X , y ,csv_namefile,clean_namedir,nb_classe):
 
 
 # La phase d'apprentissage 
-X , y , nb_classe= build_rand_feat(csv_namefile,wavfiles_namedir,config) #récupérer les Matrices X et Y préparés par la fonction build_rand_feat
+X , y , nb_classe= build_rand_feat(wavfiles_namedir,config) #récupérer les Matrices X et Y préparés par la fonction build_rand_feat
 #appeler la fonction de formation du modèle
-Train(config.model_path,X,y,csv_namefile,wavfiles_namedir,nb_classe)
+Train(config.model_path,X,y,nb_classe)
 
 
 
