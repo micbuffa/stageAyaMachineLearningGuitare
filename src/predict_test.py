@@ -107,14 +107,14 @@ def build_predictions(wavfile_namedir,config,model,classes):
             
             if mask.count(True) == len(mask):#si True donc l'échantillon est supérieur au seuil
                 
-                cl[t]= mfcc(sample,rate,numcep=config.nfeat,nfilt=config.nfilt,
+                cl[t]= mfcc(sample,16000,numcep=config.nfeat,nfilt=config.nfilt,
                        nfft = config.nfft,
                        winlen=0.032,winstep=0.015)#préparation de l'échantillon en utilisant la formule mfccs
             t +=100    
             
             #x =( x - config.min) / (config.max - config.min) #normaliser le X avec les valeurs min et max qui sont déjà calculées a la phase de l'apprentissage 
   
-    for key , val in cl.items():#boucle sur le disctionnaire des échaantillons nettoyées (le suivi du trvail normal de cette fonction)
+    for key , val in cl.items():#boucle sur le disctionnaire des échantillons nettoyées (le suivi du trvail normal de cette fonction)
                
        smin = np.amin(val)
        smax = np.amax(val)
@@ -168,7 +168,8 @@ def Prediction(wavfile_namedir,config,df,classes,model):
     plot_prediction_probabilities(index_prob)
     plot_prediction_classes(index_class)
     plot_EMA(index_prob,1000)
- 
+    
+    
 
     
 def plot_prediction_probabilities(index_prob):
@@ -208,13 +209,15 @@ def plot_prediction_probabilities(index_prob):
 
     #Sauvegarde des resultast format : json et csv
     data={}
-    data['Temps(1/10s=100ms)']= x 
+    data['Temps(ms)']= x 
     for ind , val in Sav_Y.items():
       data[ind] =val
       
     pred_df = pd.DataFrame(data)   
-    pred_df.to_csv('Probabilité_classe_predictions.csv',index = False, sep =';')
-    pred_df.to_json('Probabilité_classe_predictions.json', orient='records') 
+    pred_df.to_csv('Probabilite_classe_predictions.csv',index = False)
+    son= pred_df.to_json('Probabilite_classe_predictions.json', orient='table') 
+    
+    return son
 
 
 def plot_prediction_classes(index_class):
@@ -240,18 +243,18 @@ def plot_prediction_classes(index_class):
     #len(x) : nombre de 1 / 10s dans la piste
     #len(x)*100 : pour récupérer la derniere valeur dans la liste de temps
     plt.xlim(0 ,len(x)*100)
-    plt.xlabel('Time (ms)') 
+    plt.xlabel('Time(ms)') 
     plt.ylabel('classes') 
     plt.title('la variation des prédictions du RN (test)') 
     # plt.show()
-    mpld3.save_html(p,'predict_classe.html')
+    # 1pld3.save_html(p,'predict_classe.html')
  
     #Sauvegarde des résulats en tant que fichier excel (la prédiction pour chaque 1/10s de 
     #la piste de test)  
     #100ms = 1/10s
-    data = {'Temps(1/10s=100ms)' : x ,'Output_pred ' : classe}
+    data = {'Temps(ms)' : x ,'Output_pred' : classe}
     pred_df = pd.DataFrame(data)   
-    pred_df.to_csv('Classes_predictions.csv',index = False, sep =';')
+    pred_df.to_csv('Classes_predictions.csv',index = False)
     pred_df.to_json('Classes_predictions.json', orient='records') 
 
   
@@ -293,12 +296,12 @@ def plot_EMA(index_prob,window):
     
     #Sauvegarde des resultast format : json et csv
     data={}
-    data['Temps(1/10s=100ms)']= x 
+    data['Temps(ms)']= x 
     for ind , val in Sav_Y.items():
       data[ind] =val['classe_probs']
             
     pred_df = pd.DataFrame(data) 
-    pred_df.to_csv('EMA_predictions.csv',index = False,sep =';')
+    pred_df.to_csv('EMA_predictions.csv',index = False)
     y=pred_df.to_json('EMA_predictions.json', orient='records')
     
 
@@ -325,11 +328,12 @@ def Exponential_moving_average(classe_probs,window):
     
 # Initialiser les variables à l'aide de la fonction Init 
 
+from flask import Flask,render_template
+
+
 
 
 df , classes , model, config = Init(csv_namefile,csv_namefile2)   
 #Récuperer y_pred pour tracer les resulTemps (1/10s=100ms)classe_probstats 
 Prediction(wavfile_namedir,config,df,classes,model)
 
-
-    
