@@ -181,7 +181,7 @@ def build_rand_feat(csv_namefile,wavfiles_namedir,config):
         
             X_sample = mfcc(sample,16000,numcep=config.nfeat,nfilt=config.nfilt,
                        nfft = config.nfft,
-                       winlen=0.032,winstep=0.015)#préparation de l'échantillon en utilisant la formule mfccs
+                       winlen=0.032,winstep=0.015)#préparation de l'échantillon en utilisant la formule mfcc
             # MWI norm
             smin = np.amin(X_sample)
             smax = np.amax(X_sample)
