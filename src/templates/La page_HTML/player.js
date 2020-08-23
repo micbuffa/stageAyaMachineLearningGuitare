@@ -8,7 +8,7 @@ const music = document.getElementById('music');
 /*music.addEventListener('timeupdate', function() {
   getTime();
 });*/
-var music_file='Test-6-JV&GR-Presets+Ozone';
+var music_file='Test-6-JV&GR-Presets';
 window.onload = function what(){
 document.getElementById("title").innerHTML = music_file;
 }
