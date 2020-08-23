@@ -1,0 +1,131 @@
+.u-section-1 .u-sheet-1 {min-height: 500px}
+.u-section-1 .u-layout-wrap-1 {margin-top: 60px; margin-bottom: 60px}
+.u-section-1 .u-image-1 {min-height: 400px; background-image: url("images/Guitar-guitar-28014994-1920-1200.jpg")}
+.u-section-1 .u-container-layout-1 {padding: 30px}
+.u-section-1 .u-layout-cell-2 {min-height: 400px}
+.u-section-1 .u-container-layout-2 {padding: 30px}
+.u-section-1 .u-text-1 {text-transform: uppercase; font-weight: 700; margin: 0 auto}
+.u-section-1 .u-text-2 {font-style: italic; margin: 20px 0 0} 
+
+@media (max-width: 1199px){ .u-section-1 .u-sheet-1 {min-height: 430px}
+.u-section-1 .u-layout-wrap-1 {position: relative}
+.u-section-1 .u-image-1 {min-height: 330px}
+.u-section-1 .u-layout-cell-2 {min-height: 330px} }
+
+@media (max-width: 991px){ .u-section-1 .u-sheet-1 {min-height: 353px}
+.u-section-1 .u-image-1 {min-height: 253px}
+.u-section-1 .u-layout-cell-2 {min-height: 100px} }
+
+@media (max-width: 767px){ .u-section-1 .u-sheet-1 {min-height: 580px}
+.u-section-1 .u-image-1 {min-height: 380px}
+.u-section-1 .u-container-layout-1 {padding-left: 10px; padding-right: 10px}
+.u-section-1 .u-container-layout-2 {padding-left: 10px; padding-right: 10px} }
+
+@media (max-width: 575px){ .u-section-1 .u-sheet-1 {min-height: 439px}
+.u-section-1 .u-image-1 {min-height: 239px} }.u-section-2 {margin-top: 0; margin-bottom: 0}
+.u-section-2 .u-sheet-1 {min-height: 320px}
+.u-section-2 .u-group-1 {min-height: 298px; margin: 60px auto 60px 0}
+.u-section-2 .u-container-layout-1 {padding: 30px 60px}
+.u-section-2 .u-text-1 {margin: 0}
+.u-section-2 .u-text-2 {font-style: italic; margin: 20px 0 0} 
+
+@media (max-width: 1199px){ .u-section-2 .u-group-1 {margin-right: initial; margin-left: initial} }
+
+@media (max-width: 991px){ .u-section-2 .u-container-layout-1 {padding-left: 30px; padding-right: 30px} }
+
+@media (max-width: 767px){ .u-section-2 .u-container-layout-1 {padding-left: 10px; padding-right: 10px} }.u-section-3 {margin-top: 0; margin-bottom: 0; background-image: linear-gradient(0deg, rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url("images/caio-silva-C7RFkKvThG4-unsplash.jpg")}
+.u-section-3 .u-sheet-1 {min-height: 461px}
+.u-section-3 .u-text-1 {font-size: 1.5rem; font-style: italic; width: 400px; margin: 33px auto 0}
+.u-section-3 .u-text-2 {margin: -38px 818px 0 20px}
+.u-section-3 .u-custom-html-1 {min-height: 343px; margin: 0 0 28px} 
+
+@media (max-width: 1199px){ .u-section-3 .u-sheet-1 {min-height: 380px}
+.u-section-3 .u-text-2 {margin-right: 638px; margin-left: 0}
+.u-section-3 .u-custom-html-1 {height: auto; margin-right: initial; margin-left: initial} }
+
+@media (max-width: 991px){ .u-section-3 .u-sheet-1 {min-height: 291px}
+.u-section-3 .u-text-2 {margin-right: 418px} }
+
+@media (max-width: 767px){ .u-section-3 .u-sheet-1 {min-height: 206px}
+.u-section-3 .u-text-2 {margin-right: 238px} }
+
+@media (max-width: 575px){ .u-section-3 .u-text-2 {margin-right: 38px} }.u-section-4 {background-image: none}
+.u-section-4 .u-sheet-1 {min-height: 565px}
+.u-section-4 .u-text-1 {font-size: 1.875rem; text-decoration: underline !important; margin: 23px 0 0}
+.u-section-4 .u-text-2 {font-size: 1.875rem; text-decoration: underline !important; margin: -33px auto 0 0}
+.u-section-4 .u-text-3 {margin: 20px auto 0 75px}
+.u-section-4 .u-custom-html-1 {min-height: 422px; height: auto; margin: 20px auto 23px} 
+
+@media (max-width: 1199px){ .u-section-4 .u-sheet-1 {min-height: 323px}
+.u-section-4 .u-text-1 {height: 33px}
+.u-section-4 .u-text-2 {margin-top: -66px}
+.u-section-4 .u-text-3 {margin-left: 76px}
+.u-section-4 .u-custom-html-1 {margin-right: initial; margin-left: initial} }
+
+@media (max-width: 991px){ .u-section-4 .u-text-3 {margin-left: 58px} }
+
+@media (max-width: 767px){ .u-section-4 .u-text-3 {margin-left: 44px} }
+
+@media (max-width: 575px){ .u-section-4 .u-text-1 {font-size: 1.5rem}
+.u-section-4 .u-text-2 {font-size: 1.5rem}
+.u-section-4 .u-text-3 {margin-left: 28px} }.u-section-5 {background-image: none; margin-top: 0; margin-bottom: 0}
+.u-section-5 .u-sheet-1 {min-height: 566px}
+.u-section-5 .u-text-1 {font-size: 1.875rem; text-decoration: underline !important; margin: 24px 555px 0 0}
+.u-section-5 .u-text-2 {margin: 20px auto 0 76px}
+.u-section-5 .u-custom-html-1 {min-height: 423px; height: auto; margin: 20px 0 24px} 
+
+@media (max-width: 1199px){ .u-section-5 .u-sheet-1 {min-height: 323px}
+.u-section-5 .u-text-1 {margin-right: 355px; height: 33px}
+.u-section-5 .u-custom-html-1 {margin-right: initial; margin-left: initial} }
+
+@media (max-width: 991px){ .u-section-5 .u-text-1 {margin-right: 135px}
+.u-section-5 .u-text-2 {margin-left: 58px} }
+
+@media (max-width: 767px){ .u-section-5 .u-text-1 {margin-right: 0}
+.u-section-5 .u-text-2 {margin-left: 44px} }
+
+@media (max-width: 575px){ .u-section-5 .u-text-1 {font-size: 1.5rem}
+.u-section-5 .u-text-2 {margin-left: 28px} }.u-section-6 {background-image: none; margin-top: 0; margin-bottom: 0}
+.u-section-6 .u-sheet-1 {min-height: 562px}
+.u-section-6 .u-text-1 {font-size: 1.875rem; text-decoration: underline !important; margin: 23px 0 0}
+.u-section-6 .u-text-2 {margin: 20px auto 0 75px}
+.u-section-6 .u-custom-html-1 {min-height: 422px; height: auto; margin: 25px 0 18px} 
+
+@media (max-width: 1199px){ .u-section-6 .u-sheet-1 {min-height: 323px}
+.u-section-6 .u-text-1 {height: 33px}
+.u-section-6 .u-text-2 {margin-left: 76px}
+.u-section-6 .u-custom-html-1 {margin-right: initial; margin-left: initial} }
+
+@media (max-width: 991px){ .u-section-6 .u-text-2 {margin-left: 58px} }
+
+@media (max-width: 767px){ .u-section-6 .u-text-2 {margin-left: 44px} }
+
+@media (max-width: 575px){ .u-section-6 .u-text-1 {font-size: 1.5rem}
+.u-section-6 .u-text-2 {margin-left: 28px} }
+/*Added by me*/
+.container-audio {
+    height: auto;
+    padding: 20px;
+    border-radius: 5px;
+    margin: 20px auto;
+    overflow: hidden;
+}
+.button {
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+  background-color: black;
+}
+
+audio {
+  width:100%;
+}
+audio:nth-child(2), audio:nth-child(4), audio:nth-child(6) {
+    margin: 0;
+}
