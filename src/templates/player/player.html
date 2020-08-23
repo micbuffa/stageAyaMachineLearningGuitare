@@ -1,0 +1,89 @@
+<!--This program show the music player with graphs -->
+<!DOCTYPE html>
+<html lang='en'>
+
+<head>
+
+  <meta charset='UTF-8'>
+  <link rel='apple-touch-icon' type='image/png' href='https://static.codepen.io/assets/favicon/apple-touch-icon-5ae1a0698dcc2402e9712f7d01ed509a57814f994c660df9f7a952f3060705ee.png' />
+  <meta name='apple-mobile-web-app-title' content='CodePen'>
+  <link rel='shortcut icon' type='image/x-icon' href='https://static.codepen.io/assets/favicon/favicon-aec34940fbc1a6e787974dcd360f2c6b63348d4b1f4e06c77743096d55480f33.ico' />
+  <link rel='mask-icon' type='' href='https://static.codepen.io/assets/favicon/logo-pin-8f3771b1072e3c38bd662872f6b673a722f4b3ca2421637d5596661b4e2132cc.svg' color='#111' />
+  <script type="text/javascript" src="player.js"></script>
+  <link type="text/css" rel="stylesheet" href="player.css">
+  <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css'>
+  <script src="https://unpkg.com/wavesurfer.js"></script>
+
+
+  <title>Machine Learning Music Player  </title>
+  
+</head>
+
+<body translate='no' >
+  <!-- Called of font style  file -->
+<div class ="col-md-6 offset-md-3">
+    <link href='https://fonts.googleapis.com/css?family=Allerta' rel='stylesheet'>
+
+
+    <h2>Machine Learning Music Player "Test-6-JV%26GR-Presets" </h2>
+
+
+    
+    <div class='container-audio'>
+      <div class="dropdown">
+       <button class="dropbtn">Dropdown</button>
+       <div class="dropdown-content">
+  
+         <a id= "1">Link 1</a>
+         <a id="2">Link 2</a>
+        </div>
+      </div>
+    </br></br>
+      <div id="waveform">
+                    <!-- Here be the waveform -->
+      </div>
+
+  
+    </div>
+    <div class="card"style="background-color: white; height :90% ; width:90%;margin: auto">
+        <div class="card-body">
+          <canvas id="chart_probabilite" width="3000" height="1000"></canvas>
+          <button class="button" onclick="resetZoom()">Reset Zoom</button>
+
+        </div>
+        
+    </div>  
+    <br/><br/>
+    <div class="card"style="background-color: white; height :90% ; width:90%;margin: auto">
+      
+      <div class="card-body">
+        <canvas id="chart_classe" width="3000" height="1000"></canvas>
+      </div>
+    </div>  
+    <br/><br/>
+    <div class="card"style="background-color: white; height :90% ; width:90%;margin: auto">
+      <div class="card-body">
+        <canvas id="chart_ema" width="3000" height="1000"></canvas>
+        <button class="button" onclick="resetZoom_2()">Reset Zoom</button>
+
+      </div>
+    </div>
+    <br/><br/>
+    <br/><br/>
+
+</div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@0.7.7"></script>
+
+<script type="text/javascript">
+  
+</script>
+
+</body>
+
+</html>
+ 
+
+
