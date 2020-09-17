@@ -16,7 +16,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-prediction_namecsv ='predictions_pistes.csv'
+prediction_namecsv ='Evaluation_Model_Results.csv'
 wavfiles_namedir = 'Dataset' 
 path_model ="models/conv_model"
 
