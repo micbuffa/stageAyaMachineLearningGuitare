@@ -21,12 +21,12 @@
 Data_Loading&Preprocessing.py --> Get_Model&Training.py --> Evaluation_Model.py OR Test_Tracks.py
 
 1. Data_Loading&Preprocessing.py : 
-- requirements : 
-    * The *Dataset* name need to be provided in the code.
-    * The necessary libraries are listed at the top of the program.
+    - requirements : 
+      * The *Dataset* name need to be provided in the code.
+      * The necessary libraries are listed at the top of the program.
 
-* Running this program on SPYDER IDE is faster than Google Colab.
-* Every instructions is explained in the program , and each function has it own docstrings.
+    * Running this program on SPYDER IDE is faster than Google Colab.
+    * Every instructions is explained in the program , and each function has it own docstrings.
 
 
 2. Get_Model&Training.py : 
