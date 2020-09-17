@@ -30,14 +30,13 @@ config = config()
 #         # self.kfold_path = os.path.join('kfold', 'kfold'+ '.kf')
 
 #"Test-6-JV&GR-Presets+Ozone"       
+#"Test-All-Classes
 Track_name ="Test-6-JV&GR-Presets"
 
 wavfiles_namedir ='Dataset' #le chemin de dossier des wavfiles des classes du RN
 model_filename = 'models/conv_model'
 #test_wavfile = 'Test/Test-All-Classes.wav'
 test_wavfile = 'Test/'+Track_name+'.wav'
-#test_wavfile = 'Dataset/TubeAmp-Metal.wav'
-#test_wavfile = path_+'Test/Test-6-JV&GR-Presets-stereo-2.wav'
 
 
 
@@ -92,7 +91,7 @@ def Build_Predictions(test_wavfile,classes,model):
     
     #Retrieve the wav test file
     rate, wav =  wavfile.read(test_wavfile)
-    print(rate)
+
     #Time(ms)
     t=0
     #Number of rejected and accepted samples 
