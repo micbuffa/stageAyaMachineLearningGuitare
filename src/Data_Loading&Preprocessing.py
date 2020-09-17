@@ -173,7 +173,7 @@ def Preprocessing(wavfiles_namedir,threshold):
       
     return X,y ,nb_classes
 
+print("\n[INFO] Pre-processing ..")
 
-
-X , y , nb_classes= Preprocessing(wavfiles_namedir,0.02) #récupérer les Matrices X et Y préparés par la fonction build_rand_feat
+X , y , nb_classes= Preprocessing(wavfiles_namedir,0.02) 
 
