@@ -20,7 +20,7 @@ def Load_samples():
     
     """    
     if os.path.isfile(path_samples) :
-        print('Loading existing samples for model')
+        print('Extracting features from audio')
         with open(path_samples,'rb') as handle:
             samp = pickle.load(handle)
             return samp[0],samp[1],samp[2]
@@ -123,9 +123,9 @@ def Training(X , y,nb_classes):
     plt.legend(['train', 'test'], loc='upper left')
     plt.show()
   
-print("[INFO] Creation des échantillons d'apprentissage ...")
+print("[INFO] Creation of learning samples ...")
 X , y , nb_classes=Load_samples()
 
-print("[INFO] l'Apprentissage commence ..")
+print("[INFO] Training begins ..")
 
 Training(X,y,nb_classes)
