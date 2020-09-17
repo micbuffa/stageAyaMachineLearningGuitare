@@ -1,5 +1,5 @@
- ## Explanation of how to run the programs 
- # Presentation of project directories
+ # Explanation of how to run the programs 
+ ## Presentation of project directories
 1. Dataset : contains the learning dataset, prepared by Dr. Michel W. It has 12 tracks, each corresponding to a learning class.
 2. models : contains the trained model (SavedModel).
 3. pickles : contains a configuration file corresponding to the parameters and data used in the pre-processing phase (MFCC configurations ... ).
@@ -9,7 +9,7 @@
 
 
 
- # Presentation of project programs
+ ## Presentation of project programs
  1. Configuration_Class.py : contains a configuration class, it is used to avoid repetition of the configuration for each model.
  2. Data_Loading&Preprocessing.py : includes the two functions of data loading and pre-processing, the result of this program is pre-processed samples.
  3. Get_Model&Training.py : includes the two functions get_model and training, the first function contains the definition of the model used in the training. The result of this function is the loss/accuracy graph and a ready-to-use trained model. 
@@ -17,7 +17,7 @@
  5. Test_Tracks.py : evaluates the formed model on new tracks, the result of this program is 3 graphs and 3 excel files corresponding to the resulting graphs.
 
 
-# The order of program execution
+## The order of program execution
 Data_Loading&Preprocessing.py --> Get_Model&Training.py --> Evaluation_Model.py OR Test_Tracks.py
 
 1. Data_Loading&Preprocessing.py : 
@@ -63,7 +63,7 @@ Data_Loading&Preprocessing.py --> Get_Model&Training.py --> Evaluation_Model.py 
 
 
 
-# HTML page
+## HTML page
 - the Html page contains the graphs resulting from the Test_Tracks program, a music player of the test track and its wave representation.
 - It can be launched from  *Templates->Page HTML de test->Projet.html*
 
