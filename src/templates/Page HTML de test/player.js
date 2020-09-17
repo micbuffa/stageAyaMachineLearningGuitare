@@ -319,7 +319,6 @@ window.resetZoom_2 = function() {
     const classe =table[0].split(',');
 
     const nb_classes = classe.length;
-    console.log(nb_classes)
     
     table = data.split('\n').slice(1);
 
@@ -336,7 +335,7 @@ window.resetZoom_2 = function() {
         y_classe.push(cl);
 
     });
-    console.log(y_classe);
+    //console.log(y_classe);
     
     return {xlables,y_classe,classe}
   }
@@ -361,7 +360,6 @@ window.resetZoom_2 = function() {
 
 
     });
-    //console.log(xlables,y_pred);
     
     return {xlables,y_pred}
   }
@@ -372,6 +370,8 @@ window.resetZoom_2 = function() {
     var cl = [];
 
     var url ='https://raw.githubusercontent.com/micbuffa/stageAyaMachineLearningGuitare/master/src/Test/EMA_predictions_'+music_file+'.csv';
+        //console.log(url);
+
 
 	  const response = await fetch(url);
     var data = await response.text();
