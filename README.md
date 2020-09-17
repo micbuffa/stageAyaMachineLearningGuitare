@@ -30,36 +30,36 @@ Data_Loading&Preprocessing.py --> Get_Model&Training.py --> Evaluation_Model.py 
 
 
 2. Get_Model&Training.py : 
- requirements : 
-    - *path_samples* is the path of the file where the pre-processed samples were saved, it needs to be provided in the code.
-    - *path_models*  is the path to the folder where to save the model after training, it needs to be provided in the code.
-    - The necessary libraries are listed at the top of the program.
+    - requirements : 
+      - *path_samples* is the path of the file where the pre-processed samples were saved, it needs to be provided in the code.
+      - *path_models*  is the path to the folder where to save the model after training, it needs to be provided in the code.
+      - The necessary libraries are listed at the top of the program.
 
-** Running this program on Google colab to use GPU for faster training.
-** Every instructions is explained in the program , and each function has it own docstrings.
+    * Running this program on Google colab to use GPU for faster training.
+    * Every instructions is explained in the program , and each function has it own docstrings.
 
 
 3. Evaluation_Model.py : 
-requirements : 
-    - The *Dataset* name need to be provided in the code. 
-    - *path_models* is the path to the folder where the trained model is saved, it needs to be provided in the code.
-    - The necessary libraries are listed at the top of the program.
+    - requirements : 
+      - The *Dataset* name need to be provided in the code. 
+      - *path_models* is the path to the folder where the trained model is saved, it needs to be provided in the code.
+      - The necessary libraries are listed at the top of the program.
 
-** the resulted excel file *Evaluation_Model_Results.csv* is saved in the main folder *src*.
-** the *confusion matrix* can be visualized in google colab and spyder
-** Every instructions is explained in the program , and each function has it own docstrings.
+    * the resulted excel file *Evaluation_Model_Results.csv* is saved in the main folder *src*.
+    * the *confusion matrix* can be visualized in google colab and spyder
+    * Every instructions is explained in the program , and each function has it own docstrings.
 
 
 4. Test_Tracks.py : 
-requirements : 
-    - The test track must be in the *Test* folder.
-    - The name of the test track must be provided as *Track_name*.
-    - *path_models* is the path to the folder where the trained model is saved, it needs to be provided in the code.
-    - The necessary libraries are listed at the top of the program.
+    - requirements : 
+      - The test track must be in the *Test* folder.
+      - The name of the test track must be provided as *Track_name*.
+      - *path_models* is the path to the folder where the trained model is saved, it needs to be provided in the code.
+      - The necessary libraries are listed at the top of the program.
     
-** the resulted excel files are saved in the folder *Test*.
-** the graphics can be visualized in google colab and spyder or HTML PAGE
-** Every instructions is explained in the program , and each function has it own docstrings.
+    * the resulted excel files are saved in the folder *Test*.
+    * the graphics can be visualized in google colab and spyder or HTML PAGE
+    * Every instructions is explained in the program , and each function has it own docstrings.
 
 
 
@@ -67,7 +67,7 @@ requirements :
 - the Html page contains the graphs resulting from the Test_Tracks program, a music player of the test track and its wave representation.
 - It can be launched from  *Templates->Page HTML de test->Projet.html*
 
-*requirements : 
-    1. The resulting excel files and the test track must be available in *https://github.com/micbuffa/stageAyaMachineLearningGuitare/tree/master/src/Test*.
+* requirements : 
+    - The resulting excel files and the test track must be available in *https://github.com/micbuffa/stageAyaMachineLearningGuitare/tree/master/src/Test*.
     - To view other test tracks presented in Github, the *music_file* must be replaced by the name of the desired test track in *Templates->Page HTML de test->player.js*. 
     
