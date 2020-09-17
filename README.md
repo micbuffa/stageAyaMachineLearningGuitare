@@ -1,74 +1,73 @@
-# Des informations sur les ressources liés au strage
-## Les étapes pour éxcuter le code
-    1. Veuillez exécuter eda4.py pour le nettoyage des pistes , les pistes nettoyées seront enregistrés sur le dossier clean4 (vide)
-    2. Veuillez exécuter model4.py pour l'entrainement de modele ( j'ai utilisé le modele convolutionnel car il est plus rapide et performant). Le modele et la configuration seront enregistrés respectivement dans les dossiers models4 et pickles4
-    3. Veuillez exécuter predict4.py pour avoir le resultat de l'entrainement . un fichier excel "predictions_4pistes.csv" sera ajouté a votre répertoire.
+ ## Explanation of how to run the programs 
+ # Presentation of project directories
+1. Dataset : contains the learning dataset, prepared by Dr. Michel W. It has 12 tracks, each corresponding to a learning class.
+2. models : contains the trained model (SavedModel).
+3. pickles : contains a configuration file corresponding to the parameters and data used in the pre-processing phase (MFCC configurations ... ).
+4. samples : contains pre-processed samples.
+5. templates : contains the HTML page used to view the test track results as well as js and css pages.
+6. Test : contains the test tracks and excel files resulting from the Test_Tracks program.
+
+
+
+ # Presentation of project programs
+ 1. Configuration_Class.py : contains a configuration class, it is used to avoid repetition of the configuration for each model.
+ 2. Data_Loading&Preprocessing.py : includes the two functions of data loading and pre-processing, the result of this program is pre-processed samples.
+ 3. Get_Model&Training.py : includes the two functions get_model and training, the first function contains the definition of the model used in the training. The result of this function is the loss/accuracy graph and a ready-to-use trained model. 
+ 4. Evaluation_Model.py : evaluates the trained model on the dataset used in the learning. The result of this program is the Confusion Matrix and Precision Score.
+ 5. Test_Tracks.py : evaluates the formed model on new tracks, the result of this program is 3 graphs and 3 excel files corresponding to the resulting graphs.
+
+
+# The order of program execution
+Data_Loading&Preprocessing.py --> Get_Model&Training.py --> Evaluation_Model.py OR Test_Tracks.py
+
+1. Data_Loading&Preprocessing.py : 
+ requirements : 
+    - The *Dataset* name need to be provided in the code.
+    - The necessary libraries are listed at the top of the program.
+
+** Running this program on SPYDER IDE is faster than Google Colab.
+** Every instructions is explained in the program , and each function has it own docstrings.
+
+
+2. Get_Model&Training.py : 
+ requirements : 
+    - *path_samples* is the path of the file where the pre-processed samples were saved, it needs to be provided in the code.
+    - *path_models*  is the path to the folder where to save the model after training, it needs to be provided in the code.
+    - The necessary libraries are listed at the top of the program.
+
+** Running this program on Google colab to use GPU for faster training.
+** Every instructions is explained in the program , and each function has it own docstrings.
+
+
+3. Evaluation_Model.py : 
+requirements : 
+    - The *Dataset* name need to be provided in the code. 
+    - *path_models* is the path to the folder where the trained model is saved, it needs to be provided in the code.
+    - The necessary libraries are listed at the top of the program.
+
+** the resulted excel file *Evaluation_Model_Results.csv* is saved in the main folder *src*.
+** the *confusion matrix* can be visualized in google colab and spyder
+** Every instructions is explained in the program , and each function has it own docstrings.
+
+
+4. Test_Tracks.py : 
+requirements : 
+    - The test track must be in the *Test* folder.
+    - The name of the test track must be provided as *Track_name*.
+    - *path_models* is the path to the folder where the trained model is saved, it needs to be provided in the code.
+    - The necessary libraries are listed at the top of the program.
     
+** the resulted excel files are saved in the folder *Test*.
+** the graphics can be visualized in google colab and spyder or HTML PAGE
+** Every instructions is explained in the program , and each function has it own docstrings.
 
 
 
-        * Veuillez utiliser Spyder pour que vous pouvez visualiser les résultats des fonctions de tracage dans l'IDE
-        * Wavfiles4 contient les 125 morceaux de piste (Chorus , Nickel-Power , Phaser_ , Reverb)
+# HTML page
+- the Html page contains the graphs resulting from the Test_Tracks program, a music player of the test track and its wave representation.
+- It can be launched from  *Templates->Page HTML de test->Projet.html*
 
-
-## Modification de 06/05/2020 :
-    1. Kfold.py est equivalant à model4.py (étape 2 ) , la seule difference c'est que ce fichier utilise la technique Kfold validation. Le model entrainé sera enregistré dans le dossier kfold.
-    2.J'ai ajouté à la classe config (cfg4) le chemin du dossier des échantillons préparées et enregistrées (samples4) et du dossier kfold.
-    3.J'ai ajouté la matrice de confusion dans predict.py
+requirements : 
+    - The resulting excel files and the test track must be available in *https://github.com/micbuffa/stageAyaMachineLearningGuitare/tree/master/src/Test*.
+    - To view other test tracks presented in Github, the *music_file* must be replaced by the name of the desired test track in *Templates->Page HTML de test->player.js* (). 
     
-
-
-
-## Modification de 10/05/2020 :
-    1. j'ai modifié le programme de Kfold pour qu'il soit capable de faire 5 epochs par split
-    la précision est augmenté à 92.16%
-
-    2.La ré-organisation de predict4.py (sous forme des fonctions : Predicition , Init ..) et l'ajout de la fonction confusion_matrix_fct qui calcule et affiche la matrice de confusion
-
-    3.les changements demandés pour la semaine sont effectués:
-    * Concernant l'optimisation du code, j'ai modifié tous les programmes python en ajoutant des fonctions pour organiser le code.
-    * les fonctions demandées sont ajoutées au niveau de model4_validation_manuelle.py
-     et predict4.py
-         model4_validation_manuelle.py : ce programme utilise la validation manuelle pour l'apprentissage (validation_data)
-         model4.py : ce programme utilise la validation automatique (validation_split)
-    * Pour la partie de test (track_test) :
-
-        Le dossier Test contient le dossier clean_test , wavfiles_test , le fichier excel des pistes et eda_test.py le programme qui nous permet de nettoyer  la piste de test "LaGronge-Guitars"
-        ## Pour tester  :
-            1.vous exécutez le programme "eda_test.py" pour le nettoyage 
-            2.Puis vous exécutez le programme "predict_test.py" qui nous permet d'avoir la prédiction de test sous forme fichier EXCEL et le graphique de variation de ces prédictions de RN.
-            PS : Vous devez former le RN avant de tester
-    
-## Modification de 20/05/2020 :
-    1.l'ajout des commentaires dans tous les programmes.
-    2.Correction du programme de Predict_test.py (ajout des fonctions de tracage et l'optimisation du code)
-    3.Elimination des varibales globales 
-    5.Correction du probleme du coupage des pistes en petits morceaux 
-
-## Modification de 27/05/2020 :
-    1.L'ajout des commentaires pour les fonctions 
-    2.L'ajout de la fonction Plot_EMA pour le tracage de la moyenne mobille exponentielle
-    3.L'ajout de Zooming & brushing dans les graphes 
-
- ## Modification de 03/06/2020 :
-    1.L'ajout du dossier templates ou il y a les pages HTML 
-    2.L'ajout de programme flask_prog.py pour tester flask : c'est un framework nous permet l'interaction d'un programme python avec les page HTML dans le dossier templates
-    **Pour tester le prgramme :
-        1.Exécutez le programme flask_prog.py dans un IDE.
-        2.Dans le navigateur , tapez http://127.0.0.1:5000/music,quelques secondes et vous pouvez lire le fichier audio dans clean_test.
-
- ## Modification de 07/06/2020 :
-    1.Le nombre des classes est paramétré
-    2.changement du programme predict_test.py :le programme s'adapte au nombre de classes
-    3.Changement de la facon du nettoyage 
-
-
-   
-
-
-    
-
-
-
-
-
